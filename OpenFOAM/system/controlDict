@@ -1,0 +1,191 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     pimpleCentralFoam;
+
+startFrom       startTime; //firstTime, startTime, latestTime
+
+startTime       0;
+
+stopAt          endTime; //writeNow, noWriteNow, nextWrite, endTime
+
+//endTime	50000;		//run 1 w. Pimple Corrector	
+//endTime	200000;		//run 2 w/o Pimple corrector, same maxCo
+//endTime	750000;		//run 3 lower maxCo
+endTime		1000000;	//run 4 same maxCo to stabilize flowrates\
+				//run 5 same maxCo to encourage faster solution convergence w. higher rDeltaT table
+				//run 10 Data collection run with averaging funcs and probes
+//endTime	2000000;	//run 6	lower maxCo
+				//run 7 lower maxCo; No flowrate movement between 1.5 to 1. Moving to 0.65 as a test to see if there's any movement. Hopefully the lower maxCo will initiate a movemment and won't take forever to stabilize because of the higherrDeltaT
+				//run 8 same maxCo to let flowrates stabilize 
+				//run 9 same maxCo to final solution with averaging functions
+ 
+deltaT          1;
+
+writeControl    adjustableRunTime;
+
+//writeInterval	5000; 	//run 1
+//writeInterval	10000;	//run 2
+//writeInterval	50000;	//run 3
+//writeInterval	100000; //run 4, 5 & 10 
+writeInterval	200000;	//run 6-9
+
+purgeWrite      10;
+
+writeFormat     ascii;
+
+writePrecision  8;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   20;
+
+runTimeModifiable true;
+
+adjustTimeStep  false;
+
+CourantType     cellCourant;
+
+//maxCo		2.5;	//run 1 & 2
+//maxCo		1.5;	//run 3 - 5
+//maxCo		1;	//run 6
+maxCo		0.65;	//run 7 - 10
+
+rDeltaTSmoothingCoeff table		//(3000 0.5), (4000, 0.75) added in R5 for quicker convergence and solution stabilization
+					// Reduced rDeltaT settings more conservaive in R10 for less error and better data collection
+(
+   (   0 0.001)
+   ( 100 0.001)
+   (1000 0.025)
+   (2000 0.1)
+   (3000 0.5)
+);
+
+rDeltaTDampingCoeff 0.2;
+
+initialDeltaT   1e-7;
+
+maxDeltaT       0.05;
+
+CourantCalcMethod acousticCourant;
+
+functions
+{
+  #includeFunc  residuals
+  #includeFunc  jetInletFlow
+  #includeFunc  farfieldATMFlow
+  #includeFunc  outletFlow
+  #includeFunc  inletFlow
+  #includeFunc  Min
+  #includeFunc  Max
+  #includeFunc  MachNo
+  #includeFunc  yPlus
+  #includeFunc  tubeInlet_intB
+  #includeFunc  tubeOutlet_intB
+  #includeFunc  jetOutlet_intB
+  #includeFunc  jetCore_intB
+  #includeFunc  turbulenceFields
+  #includeFunc  jetOutletFlow
+  #includeFunc  tubeInletFlow
+  #includeFunc  tubeOutletFlow
+  #includeFunc	wallShearStress
+  #includeFunc  probe1250a
+  #includeFunc  probe1250b
+  #includeFunc  probe1250c
+  #includeFunc  probe1425a
+  #includeFunc  probe1425b
+  #includeFunc  probe1425c
+  #includeFunc  probe1575a
+  #includeFunc  probe1575b
+  #includeFunc  probe1575c
+
+  fieldAverage1
+ {
+    // Mandatory entries (unmodifiable)
+    type            fieldAverage;
+    libs            ("libfieldFunctionObjects.so");
+
+
+    // Mandatory entries (runtime modifiable)
+    fields
+    (
+        U
+        {
+            mean        on;
+            prime2Mean  on;
+            base        time;
+        }
+	
+	T
+        {
+            mean        on;
+            prime2Mean  on;
+            base        time;
+        }
+	
+	p
+        {
+            mean        on;
+            prime2Mean  on;
+            base        time;
+        }
+
+	rho
+        {
+            mean        on;
+            prime2Mean  on;
+            base        time;
+        }
+
+	omega
+        {
+            mean        on;
+            prime2Mean  on;
+            base        time;
+        }
+
+	k
+        {
+            mean        on;
+            prime2Mean  on;
+            base        time;
+        }
+
+	nut
+        {
+            mean        on;
+            prime2Mean  on;
+            base        time;
+        }
+    );
+    
+    // Optional (inherited) entries
+    enabled         true;
+    log             true;
+    executeControl  timeStep;
+    executeInterval 1;
+    writeControl    writeTime;
+   
+ };
+
+
+}
+
+
+// ************************************************************************* //

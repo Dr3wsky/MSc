@@ -1,0 +1,108 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    location    "1";
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+
+internalField   uniform (0.1 0 0);
+
+boundaryField
+{
+    jetInlet
+    {
+        type            zeroGradient;
+    }
+    inletATM
+    {
+        type            zeroGradient;
+    }
+    jetTubeID
+    {
+        type            noSlip;
+    }
+    jetTubeOD
+    {
+        type            noSlip;
+    }
+    tubeID
+    {
+        type            noSlip;
+    }
+    tubeOD
+    {
+        type            noSlip;
+    }
+    farfieldATM
+    {
+        type            zeroGradient;
+    }
+    outletATM
+    {
+        type            zeroGradient;
+    }
+    sym1
+    {
+        type            symmetry;
+    }
+    sym2
+    {
+        type            symmetry;
+    }
+    jetOutlet_intA
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+    jetOutlet_intB
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+    tubeInlet_intA
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+    tubeInlet_intB
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+    tubeOutlet_intA
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+    tubeOutlet_intB
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+    jetCore_intA
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+    jetCore_intB
+    {
+        type            cyclicAMI;
+        value           uniform (0.1 0 0);
+    }
+}
+
+
+// ************************************************************************* //
