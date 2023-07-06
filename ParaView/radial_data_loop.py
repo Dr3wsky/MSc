@@ -27,13 +27,13 @@ UpdatePipeline(time=0.09999999999991947, proxy=pIVfoam)
 while x_d <= end: 
     plotOverLine1 = PlotOverLine(registrationName='PlotOverLine1', Input=pIVfoam)
     plotOverLine1.Point1 = [x_pos, 0.0, 0.0]
-    plotOverLine1.Point2 = [x_pos, 0.025396, 0.0]
+    plotOverLine1.Point2 = [x_pos, 0.025396, 0.0011075]
 
     UpdatePipeline(time=0.09999999999991947, proxy=plotOverLine1)
 
     # save data
-    SaveData('C:/Users/drewm/Documents/2.0 MSc/2.0 Simulations/' + sim + '/radial_data_xd' + str(x_d) + '.csv', proxy=plotOverLine1, ChooseArraysToWrite=1,
-    PointDataArrays=['Ma', 'R', 'RMean', 'T', 'TMean', 'TPrime2Mean', 'U', 'UMean', 'UPrime2Mean', 'alphat', 'epsilon', 'k', 'kMean', 'kPrime2Mean', 'nut', 'nutMean', 'nutPrime2Mean', 'p', 'pMean', 'pPrime2Mean', 'rho', 'rhoMean', 'rhoPrime2Mean', 'turbulenceProperties:omega'])
+    SaveData('C:/Users/drewm/Documents/2.0 MSc/2.0 Simulations/' + sim + '/radial_data_xd_' + str(x_d) + '.csv', proxy=plotOverLine1, ChooseArraysToWrite=1,
+    PointDataArrays=['Ma', 'R', 'RMean', 'T', 'TMean', 'TPrime2Mean', 'U', 'UMean', 'UPrime2Mean', 'alphat', 'epsilon', 'k', 'kMean', 'kPrime2Mean', 'nut', 'nutMean', 'nutPrime2Mean', 'p', 'pMean', 'pPrime2Mean', 'rho', 'rhoMean', 'rhoPrime2Mean', 'turbulenceProperties:R', 'turbulenceProperties:omega'])
 
     x_d += 2.5
     x_pos = 0.33533+(x_d*0.0064)
