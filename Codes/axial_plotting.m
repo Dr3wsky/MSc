@@ -8,12 +8,13 @@
 
 clc
 close all
+% clear all
 
 %% Define Working Space and Read Data
 
 load('exp_data.mat')
 
-for i = 2:4
+for i = 1:4
     mesh = i;
     loc = strcat('C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\PIV_JetSim_M', string(mesh),'\');
     type = sprintf("axial_data");
@@ -26,33 +27,36 @@ eval(sprintf("names = data_M%s.Properties.VariableNames;", string(mesh)));
 eval(sprintf("xd = (data_M%s.Points_0-0.33533)/0.00635;", string(mesh)));
 start = find(xd>0,1);
 fin = find(xd>40, 1);
-var = 'UMean_0';
+var = 'UMean_1';
 
 exp_xd = exp_x(1,:)/6.35;
 exp_start = find(exp_u_centreline == 0);
+% Add func to normalize u_centrline by u_centreline_max
 
     
 %% Plotting
 markers = ["o" "s" "^" ">" "<" "*"];
-colormap = ["#3498db"; "#2ecc71";  "#8e44ad"; "#e74c3c"; "#e67e22"; "#f1c40f"];
+colormap = ["#e74c3c"; "#e67e22";"#2ecc71"; "#8e44ad";  "#3498db"; "#f1c40f"];
 
 figure(1)
 hold on 
-for j = 2:4
-eval(sprintf("plot(xd, data_M%s.%s)", string(j), var))
+for j = 4:4
+eval(sprintf("plot(xd, data_M%s.%s, 'Color', '%s', 'LineWidth', 1.15)", string(j), var, colormap(j)))
 end
-plot(exp_xd(11:end), exp_u_centreline(11:end)) % don't have data for initial jet exit due to PIV reflections
+% plot(exp_xd(11:end), exp_u_centreline(11:end), 'LineWidth', 1.15, Color=colormap(5)) 
+plot(exp_xd(11:455), exp_v_centreline(11:end), 'LineWidth', 1.15, Color=colormap(5))
 
-% plot(xd(start:fin), data_M2.U_0(start:fin))
-% plot(xd(start:fin), data_M3.U_0(start:fin))
-% plot(xd(start:fin), data_M4.U_0(start:fin))
-% plot(data_Exp.Var1, data_Exp.Var3)
-xlim([0 25])
+grid on
+grid minor
+xlim([0 30])
 ylim auto
-ylabel('$Axial Centreline Velocity: U [m/s] $','interpreter','latex')
-xlabel('$Non-Dimensional Axial Position: x/D_{jet}$','interpreter','latex')
-title('Centreline Velocity Decay')
-legend("RANS CFD, M2","RANS CFD, M3", "RANS CFD, M4","PIV Experimental")
+ylabel('$Radial Velocity: U_y [m/s] $','interpreter','latex', 'FontSize', 14)
+xlabel('$Non-Dimensional Axial Position: x/D_{jet}$','interpreter','latex', 'FontSize', 14)
+title('Centreline Velocity Profile', 'FontSize', 14)
+% legend("M1: k-w SST", "M2: k-w SST","M3: k-w SST", "M4: k-w SST")
+% legend("M1: k-w SST", "M2: k-w SST","M3: k-w SST", "M4: k-w SST","Experiment: PIV")
+legend("M4: k-w SST","Experiment: PIV")
+lgd.FontSize = 14;
 
 % "RANS CFD, M1",
 
