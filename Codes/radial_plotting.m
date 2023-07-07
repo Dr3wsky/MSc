@@ -8,15 +8,17 @@
 
 clc
 close all
-% clear all 
+clear all 
 
 %% Define Working Space and Variables 
 mesh = 4;
 loc = strcat('C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\PIV_JetSim_M', string(mesh),'\');
 type = "radial_data_xd_";
-R_stress_legend = ['Rxx', 'Rxy', 'Rxz', 'Ryy', 'Ryz', 'Rzz'];
+Rstress_legend = ['Rxx', 'Rxy', 'Rxz', 'Ryy', 'Ryz', 'Rzz'];
+UPrime2Mean_legend = ['UPrime2Mean_xx', 'UPrime2Mean_xy', 'UPrime2Mean_xz', 'UPrime2Mean_yy', 'UPrime2Mean_yz', 'UPrime2Mean_zz'];
+
 r_jet = 0.0032;
-r_tube = .0254;
+r_tube = 0.025396;
 
 %% Read Data 
 j=0;
@@ -26,28 +28,35 @@ names = data_0.Properties.VariableNames;
 r_dimless = data_0.Points_1/data_0.Points_1(end);
 x_var = "UMean_0";
 
+markers = ["o" "s" "^" ">" "<" "*"];
+colormap = ["#f1c40f"; "#e67e22"; "#f51818"; "#f03acb"; "#8e44ad";  "#3498db"; "#2ecc71";];
+
 for i =  10:2.5:25
     j = j + 1;
     xd(j) = i;
     data = readtable(strcat(loc, type, sprintf('%0.1f',xd(j)), '.csv'), 'Format','auto');
-%     u_mag = sqrt((data.U_0.^2) + (data.U_1.^2) + (data.U_2.^2));
     eval(sprintf("%s(:,%d) = data.%s;", x_var, j, x_var))
+    %     u_mag = sqrt((data.U_0.^2) + (data.U_1.^2) + (data.U_2.^2));
 
 
 %% Radial Profile 
 
     figure(1)
     hold on
-%     plot(u_mag, r_dimless)
-    eval(sprintf("plot(%s(:,%d), r_dimless);",x_var, j)) 
+    eval(sprintf("plot(r_dimless, %s(:,%d), 'Color', '%s', 'LineWidth', 1.15);",x_var, j, colormap(j))) 
 %     plot(b_vel,b_dimless, 'Marker',  '.', 'Color', 'k', 'MarkerSize', 9)
+%     plot(u_mag, r_dimless)
+    eval(sprintf('legend_array(%d) = "x/D_{jet} = %s";', j, string(i))) 
 
 end
 hold off
-    ylabel(sprintf('%s [m/s]', x_var), 'FontSize', 14)
-    xlabel('Non-DImensional Radial Position: r/R', 'FontSize', 14)
-    title('Radial Profile', 'FontSize', 14)
+    grid on
     xlim auto
     ylim auto
-    legend ('x/d = 12.5', 'x/d = 15', 'x/d = 17.5', 'x/d = 20', 'x/d = 22.5')
-% legend ('x/d = 15', 'x/d = 30', 'x/d = 45', 'x/d = 60', 'x/d = 75', 'x/d = 90','x/d = 105', 'x/d = 120', 'x/d = 135')
+    legend(legend_array)
+    ylabel('$Velocity:\ U_x\ [m/s]$','interpreter','latex', 'FontSize', 14)
+    xlabel('$Radial\ Position:\ r/R_{tube}$','interpreter','latex', 'FontSize', 14)
+    title('Radial Velocity Profiles', 'FontSize', 14)
+    xlim auto
+    ylim auto
+    legend(legend_array)
