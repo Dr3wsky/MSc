@@ -8,14 +8,14 @@
 
 clc
 % close all
-% clear all 
+clear all 
 
 %% Define Working Space and Variables 
 mesh = 4;
 loc = strcat('C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\PIV_JetSim_M', string(mesh),'\');
 type = "radial_data_xd_";
-R_stress_legend = ['Rxx', 'Ryy', 'Rzz', 'Rxy', 'Ryz', 'Rxz'];
-UPrime_2_Mean_legend = ['UPrime2Mean_xx', 'UPrime2Mean_xy', 'UPrime2Mean_xz', 'UPrime2Mean_yy', 'UPrime2Mean_yz', 'UPrime2Mean_zz'];
+R_stress_legend = ["Rxx", "Ryy", "Rzz", "Rxy", "Ryz", "Rxz"];
+UPrime_2_Mean_legend = ["UPrime2Mean_xx", "UPrime2Mean_xy", "UPrime2Mean_xz", "UPrime2Mean_yy", "UPrime2Mean_yz", "UPrime2Mean_zz"];
 r_jet = 0.0032;
 r_tube = 0.0254;
 
@@ -30,7 +30,7 @@ names = data_0.Properties.VariableNames;
 r_dimless = data_0.Points_1/data_0.Points_1(end);
 x_var = "UMean_0";
 
-for i =  10:2.5:25                                                   
+for i = 7.5:2.5:25                                                   
     j = j + 1;
     xd(j) = i;                                                                                  % Assign radial position array
     data = readtable(strcat(loc, type, sprintf('%0.1f',xd(j)), '.csv'), 'Format','auto');       % Non-dimensionalize radial position
@@ -39,12 +39,22 @@ for i =  10:2.5:25
     eval(sprintf("%s(:,%d) = data.%s;", x_var, j, x_var))                                       % Plot line
     
     %% Find location and calculate secondary stream for radial pos
-    u_m(j) = max(UMean_0(:,j));                                                                 % Absolute max jet velocity
+    u_m(j) = max(data.UMean_0(j));                                                                 % Absolute max jet velocity
     counter = 0;
-    for k = find(r_dimless>=(r_jet/r_tube),1):find(r_dimless>=0.9,1)
-        counter = counter+1;
-        UMean_0_trimmed(k-126,j) = UMean_0(k,j);                                                % Trim jet and wall effects
-        r_trimmed(counter) = k/length(r_dimless);
+    if (xd(j)<22.5)
+        for k = find(r_dimless>=(r_jet/r_tube),1):find(r_dimless>=0.9,1)
+            counter = counter+1;
+            UMean_0_trimmed(k-126,j) = UMean_0(k-126,j);  
+            UMean_0_trimmed(UMean_0_trimmed<= 0.5) = NaN;                   % Trim jet and wall effects
+            r_trimmed(counter) = k/length(r_dimless);                       % Remove zeros for histogram
+        end
+    else 
+         for k = find(r_dimless>=3*(r_jet/r_tube),1):find(r_dimless>=0.95,1)
+            counter = counter+1;
+            UMean_0_trimmed(k,j) = UMean_0(k,j);                            % Trim jet and wall effects
+            UMean_0_trimmed(UMean_0_trimmed<= 0.5) = NaN;                   % Remove zeros for histogram
+            r_trimmed(counter) = k/length(r_dimless);
+         end
     end
     
     % Use histogram to find average secondary velocity
@@ -52,6 +62,9 @@ for i =  10:2.5:25
     holder = h.Values;
     idx = find(holder == max(h.Values));                                    % index tallest bin (y value)
     U2(j) = mean(h.BinEdges(idx));                                          % param value of tallex bin
+    if (xd(j)==25)                                                          % Manually asssign U2 for xd = 25
+        U2(j) = 32;
+    end
     U_excess(:,j) = UMean_0(:,j) - U2(j);
     U_excess_centreline(j) = max(U_excess(:,j));
     close(figure)
@@ -71,12 +84,12 @@ for i =  10:2.5:25
     Ryy(:,j) = data.turbulenceProperties_R_1;
     Rxy(:,j) = data.turbulenceProperties_R_3;
 
-    % if j >= 2                                                             
-    %     b_prime(j) = (b(j)-b(j-1))/(2.5*2*r_jet);
-    %     Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-    %     Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-    %     Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-    % end
+    if (j>=2)                                                             
+        b_prime(j) = (b(j)-b(j-1))/((xd(j)-xd(j-1))*2*r_jet);
+        Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+        Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+        Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+    end
 
 end
 
@@ -119,7 +132,7 @@ close all
 %     fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 1);
 %     fplot(@(x) (1+x^2/2)^(-2),'*k',[-1.5 1.5], 'LineWidth', 0.8);
 %     plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(1), 'LineWidth', 1.5);
-%     plot(exp_zeta(:,exp_x_loc(find(exp_xd==xd(j)))), exp_Unorm(:,exp_x_loc(find(exp_xd==xd(j)))),markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(1));
+%     plot(exp_zeta(:,exp_x_loc(find(exp_xd==xd(j)))), exp_f_zeta(:,exp_x_loc(find(exp_xd==xd(j)))),markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(1));
 %     eval(sprintf('title("x/D_{jet} = %s");', string(xd(j))));
 %     legend(legend_array)
 %     xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
@@ -139,7 +152,7 @@ figure(1)
 % legend_array(1) = "k-w SST M4";
 % legend_array(2) = "PIV Experimenal";
 
-for j = 1:length(xd)-1
+for j = 3:length(xd)
     subplot(2,3,j)
     hold on
     plot(r_dimless, Rxx(:,j), 'Color', colormap(1), 'LineWidth', 1.5)
