@@ -8,7 +8,7 @@
 
 clc
 % close all
-clear all 
+% clear all 
 
 %% Define Working Space and Variables 
 mesh = 4;
@@ -84,7 +84,7 @@ end
 %% Collect comparison data & reorg for plotting
 load exp_data.mat;
 
-
+% % To inverse sign direction for exp data
 % exp_Rxy = -1*(exp_Rxy);
 
 % count = 0;
@@ -113,12 +113,13 @@ close all
 % legend_array(3) = "k-w SST M4";
 % legend_array(4) = "PIV Experimenal";
 % for j = 1:length(xd)-1
-%     figure(j)
+%     % figure(j)             % Makes Individual figs for each xd
+%     subplot(2,3,j)          % plots on all one figure
 %     hold on
 %     fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 1);
 %     fplot(@(x) (1+x^2/2)^(-2),'*k',[-1.5 1.5], 'LineWidth', 0.8);
-%     plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(j), 'LineWidth', 1.5);
-%     plot(exp_zeta(:,exp_x_loc(find(exp_xd==xd(j)))), exp_Unorm(:,exp_x_loc(find(exp_xd==xd(j)))),markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(j));
+%     plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(1), 'LineWidth', 1.5);
+%     plot(exp_zeta(:,exp_x_loc(find(exp_xd==xd(j)))), exp_Unorm(:,exp_x_loc(find(exp_xd==xd(j)))),markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(1));
 %     eval(sprintf('title("x/D_{jet} = %s");', string(xd(j))));
 %     legend(legend_array)
 %     xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
@@ -132,26 +133,39 @@ close all
 % end
 
 
-% Plot Velocity data vs. exp results
-% figure(5)
-% for j = 1:length(b_vel)
-%     subplot(2,3,j)
-%     hold on
-%     plot(r_dimless, U(:,j), '-b')
-%     plot(r_dimless, Ryy(:,j), '*k', 'MarkerIndices',1:15:length(r_dimless), 'MarkerSize',4,'MarkerEdgeColor',colormap(3))
-%      plot(r_dimless, Rxy(:,j), 'or', 'MarkerIndices',1:15:length(r_dimless), 'MarkerSize',4,'MarkerEdgeColor',colormap(5))
-%     plot(exp_r_norm(:,exp_x_loc(j)), exp_Ryy_g(:,exp_x_loc(j)),markers(j),'MarkerSize',4,'MarkerEdgeColor',colormap(j))
-%     hold off
-%     ylim([0 2500])
-%     xlim([0 1])
-%     xlabel('$r/R$','interpreter','latex')
-%     ylabel("$Reynolds Stress [m^2/s^2]$",'interpreter','latex')
-%     hYLabel = get(gca,'YLabel');
-%     set(hYLabel,'rotation',0,'VerticalAlignment','middle')
-%     legend("$\overline {u'u'}$","$\overline {v'v'}$", "$\overline {u'v'}$",'interpreter','latex')
-%     eval(sprintf("title('Reynold Stresses x/d = %0.1f')", xd(j)))
-% end
+% Plot Reynolds Stresses
+figure(1)
+% sgtitle({'Reynolds Stresses'; ''}, 'FontSize', 18)
+% legend_array(1) = "k-w SST M4";
+% legend_array(2) = "PIV Experimenal";
 
+for j = 1:length(xd)-1
+    subplot(2,3,j)
+    hold on
+    plot(r_dimless, Rxx(:,j), 'Color', colormap(1), 'LineWidth', 1.5)
+    plot(r_dimless, Ryy(:,j), 'Color', colormap(2), 'LineWidth', 1.5)
+    plot(r_dimless, Rxy(:,j), 'Color', colormap(3), 'LineWidth', 1.5)
+    % plot(exp_r_norm(:,exp_x_loc(find(exp_xd==xd(j)))), exp_Rxy(:,exp_x_loc(find(exp_xd==xd(j)))), markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(j))
+    hold off
+    xlabel('$r/R$','interpreter','latex', 'FontSize', 14')
+    % ylabel({"$\overline{u'v'}\ \ \ \ \ \ \ $";"$[\frac{m^2}{s^2}]\ \ \ \ \ \ \ $"},'interpreter','latex', 'FontSize', 16)
+    ylabel({'Reynolds\ \ \ \ \ \ \ \ \ \ \ '; 'Stresses\ \ \ \ \ \ \ \ \ \ \ '; '$[m^2/s^2]$\ \ \ \ \ \ \ \ \ \ \ '}, 'interpreter','latex', 'FontSize', 12')
+    hYLabel = get(gca,'YLabel');
+    set(hYLabel,'rotation',0,'VerticalAlignment','middle')
+    % legend(legend_array)
+    legend("$\overline{u'u'}$","$\overline{v'v'}$", "$\overline{u'v'}$",'interpreter','latex', 'FontSize', 14')
+    eval(sprintf('title("x/D_{jet} = %s");', string(xd(j))));
+    ylim([0 2500])
+    xlim([0 1])
+    grid on
+    grid minor
+    hold off
+
+end
+
+% For multi Reynolds Plotting: 
+% plot(r_dimless, Rxx(:,j), '*k', 'MarkerIndices',1:15:length(r_dimless), 'MarkerSize',4,'MarkerEdgeColor',colormap(3))
+% legend("$\overline{u'u'}$","$\overline{v'v'}$", "$\overline{u'v'}$",'interpreter','latex'
 
 
 
