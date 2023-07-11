@@ -8,7 +8,7 @@
 
 clc
 % close all
-clear all 
+% clear all 
 
 %% Define Working Space and Variables 
 mesh = 4;
@@ -100,15 +100,20 @@ load exp_data.mat;
 % % To inverse sign direction for exp data
 % exp_Rxy = -1*(exp_Rxy);
 
+% % To calculate b_prime for exp data
 % count = 0;
-% for i = 2:length(exp_x_loc)    
-%     count = count +1;
-%     % WRONG - ussue here with finding b_prime
-%     exp_b_prime(count) = (exp_half_width(exp_x_loc(i))-exp_half_width(exp_x_loc(i-1)))/(2.5*2*r_jet);
-%     exp_Rxx_norm(:,i) = exp_Rxx_g(:,i)/((exp_u_max(i)^2)*exp_b_prime(count));
-%     exp_Rxy_norm(:,i) = exp_Rxy_g(:,i)/((exp_u_max(i)^2)*exp_b_prime(count));
-%     exp_Ryy_norm(:,i) = exp_Ryy_g(:,i)/((exp_u_max(i)^2)*exp_b_prime(count));
-% end
+for i = 2:length(xd)    
+    % WRONG - ussue here with finding b_prime
+    x_ind(i) = exp_x_loc(find(exp_xd==xd(i)));
+    if (i==2)
+        x_ind(i-1) = exp_x_loc(find(exp_xd==xd(i-1)));
+    end
+    exp_b_prime(i) = (exp_b(x_ind(i))-exp_b(x_ind(i-1)))/(exp_x(1,x_ind(i))-exp_x(1,x_ind(i-1)));  
+    % To fix
+    exp_Rxx_norm(k,:) = exp_Rxx(k,:)/((exp_Uexcess_centreline(k,:)^2)*exp_b_prime(i));
+    exp_Rxy_norm(k,:) = exp_Rxy(:,exp_x_loc(find(exp_xd==xd(i))))/((exp_Uexcess_centreline(exp_x_loc(find(exp_xd==xd(i))))^2)*exp_b_prime(i));
+    exp_Ryy_norm(k,:) = exp_Ryy(:,exp_x_loc(find(exp_xd==xd(i))))/((exp_Uexcess_centreline(exp_x_loc(find(exp_xd==xd(i))))^2)*exp_b_prime(i));
+end
 
 
 
