@@ -156,28 +156,28 @@ close all
 
 % Plot Reynolds Stresses
 figure(1)
-% sgtitle({'Reynolds Stresses'; ''}, 'FontSize', 18)
-% legend_array(1) = "k-w SST M4";
-% legend_array(2) = "PIV Experimenal";
+sgtitle({'Streamwise Normal Reynolds Shear Stresses'; ''}, 'FontSize', 16)
+legend_array(1) = "k-w SST M4";
+legend_array(2) = "PIV Experimenal";
 
-for j = 3:length(xd)
-    subplot(2,3,j)
+for j = 2:length(xd)-1
+    subplot(2,3,j-1)
     hold on
-    plot(r_dimless, Rxx(:,j), 'Color', colormap(1), 'LineWidth', 1.5)
-    plot(r_dimless, Ryy(:,j), 'Color', colormap(2), 'LineWidth', 1.5)
-    plot(r_dimless, Rxy(:,j), 'Color', colormap(3), 'LineWidth', 1.5)
-    % plot(exp_r_norm(:,exp_x_loc(find(exp_xd==xd(j)))), exp_Rxy(:,exp_x_loc(find(exp_xd==xd(j)))), markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(j))
+    plot(zeta(:,j), Rxx_norm(:,j), 'Color', colormap(j-1    ), 'LineWidth', 1.5)
+    % plot(zeta(j), Ryy_norm(:,j), 'Color', colormap(2), 'LineWidth', 1.5)
+    % plot(zeta(j), Rxy_norm(:,j), 'Color', colormap(3), 'LineWidth', 1.5)
+    plot(exp_zeta(:,exp_x_loc(find(exp_xd==xd(j)))), exp_Rxx_norm(:,j), markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(j-1))
     hold off
-    xlabel('$r/R$','interpreter','latex', 'FontSize', 14')
-    % ylabel({"$\overline{u'v'}\ \ \ \ \ \ \ $";"$[\frac{m^2}{s^2}]\ \ \ \ \ \ \ $"},'interpreter','latex', 'FontSize', 16)
-    ylabel({'Reynolds\ \ \ \ \ \ \ \ \ \ \ '; 'Stresses\ \ \ \ \ \ \ \ \ \ \ '; '$[m^2/s^2]$\ \ \ \ \ \ \ \ \ \ \ '}, 'interpreter','latex', 'FontSize', 12')
+    xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14')
+    ylabel("$\frac{\overline{u'u'}}{{\overline{U_m}^2}{b^\prime}}\ \ \ \ \ \ \ $",'interpreter','latex', 'FontSize', 16)
+    % ylabel({'Reynolds\ \ \ \ \ \ \ \ \ \ \ '; 'Stresses\ \ \ \ \ \ \ \ \ \ \ '; 'Normalized\ \ \ \ \ \ \ \ \ \ \ '}, 'interpreter','latex', 'FontSize', 12')
     hYLabel = get(gca,'YLabel');
     set(hYLabel,'rotation',0,'VerticalAlignment','middle')
-    % legend(legend_array)
-    legend("$\overline{u'u'}$","$\overline{v'v'}$", "$\overline{u'v'}$",'interpreter','latex', 'FontSize', 14')
+    legend(legend_array)
+    % legend("$\overline{u'u'}$","$\overline{v'v'}$", "$\overline{u'v'}$",'interpreter','latex', 'FontSize', 14')
     eval(sprintf('title("x/D_{jet} = %s");', string(xd(j))));
-    ylim([0 2500])
-    xlim([0 1])
+    ylim auto
+    xlim([0 2.5])
     grid on
     grid minor
     hold off
