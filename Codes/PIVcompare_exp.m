@@ -83,15 +83,15 @@ for i = 7.5:2.5:25
     Rxx(:,j) = data.turbulenceProperties_R_0;
     Ryy(:,j) = data.turbulenceProperties_R_1;
     Rxy(:,j) = data.turbulenceProperties_R_3;
-
-    if (j>=2)                                                             
-        b_prime(j) = (b(j)-b(j-1))/((xd(j)-xd(j-1))*2*r_jet);
-        Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-        Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-        Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-    end
-
 end
+
+% % To normalize Reynolds Stresses
+% for j = 2:length(xd)-1
+%     b_prime(j) = ((b(j-1)+b(j+1))*.5)/(((xd(j-1)+xd(j+1))*.5)*2*r_jet);
+%     Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+%     Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+%     Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+% end
 
 
 %% Collect comparison data & reorg for plotting
@@ -100,20 +100,23 @@ load exp_data.mat;
 % % To inverse sign direction for exp data
 % exp_Rxy = -1*(exp_Rxy);
 
-% % To calculate b_prime for exp data
-% count = 0;
-for i = 2:length(xd)    
-    % WRONG - ussue here with finding b_prime
-    x_ind(i) = exp_x_loc(find(exp_xd==xd(i)));
-    if (i==2)
-        x_ind(i-1) = exp_x_loc(find(exp_xd==xd(i-1)));
-    end
-    exp_b_prime(i) = (exp_b(x_ind(i))-exp_b(x_ind(i-1)))/(exp_x(1,x_ind(i))-exp_x(1,x_ind(i-1)));  
-    % To fix
-    exp_Rxx_norm(k,:) = exp_Rxx(k,:)/((exp_Uexcess_centreline(k,:)^2)*exp_b_prime(i));
-    exp_Rxy_norm(k,:) = exp_Rxy(:,exp_x_loc(find(exp_xd==xd(i))))/((exp_Uexcess_centreline(exp_x_loc(find(exp_xd==xd(i))))^2)*exp_b_prime(i));
-    exp_Ryy_norm(k,:) = exp_Ryy(:,exp_x_loc(find(exp_xd==xd(i))))/((exp_Uexcess_centreline(exp_x_loc(find(exp_xd==xd(i))))^2)*exp_b_prime(i));
-end
+% % To calculate b_prime for exp data and normalize Reynolds Stresses
+% exp_b_prime_fine(1) = 0;
+% for i = 2:length(exp_x(1,:))-1
+%     exp_b_prime_fine(i) = ((exp_b(i+1)-exp_b(i-1))*.5)/((exp_x(1,i+1)-exp_x(1,i-1))*.5);
+% end
+% exp_b_prime_fine(459) = 0;
+% 
+% for i = 2:length(xd)-1    
+%     x_ind(i) = exp_x_loc(find(exp_xd==xd(i)));              % Parsing index for xd location 
+%     x_ind(i-1) = exp_x_loc(find(exp_xd==xd(i-1)));
+%     x_ind(i+1) = exp_x_loc(find(exp_xd==xd(i+1)));
+%     exp_b_prime(i) = ((exp_b(x_ind(i-1))+exp_b(x_ind(i+1)))*.5)/((exp_x(1,x_ind(i-1))+exp_x(1,x_ind(i+1)))*.5);
+%     exp_Rxx_norm(:,i) = exp_Rxx(:,x_ind(i))/((exp_Uexcess_centreline(x_ind(i))^2)*exp_b_prime(i));
+%     exp_Rxy_norm(:,i) = exp_Rxy(:,x_ind(i))/((exp_Uexcess_centreline(x_ind(i))^2)*exp_b_prime(i));
+%     exp_Ryy_norm(:,i) = exp_Ryy(:,x_ind(i))/((exp_Uexcess_centreline(x_ind(i))^2)*exp_b_prime(i));
+% end
+
 
 
 
