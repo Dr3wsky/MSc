@@ -7,8 +7,8 @@
 % will be a brute-force ploitting script. 
 
 clc
-% close all
-% clear all 
+close all
+clear all
 
 %% Define Working Space and Variables 
 mesh = 4;
@@ -79,23 +79,27 @@ for i = 7.5:2.5:25
     f_zeta(:,j) = U_excess(:,j)/U_excess_centreline(j);
     
 
-    %% Pull Reynolds Stresses & Normalize                                   % Need the b_prime, so cannot plot xd = 1, as is okay because it it not self-similat in this region anyways
+    %% Pull Reynolds Stresses & Normalize
     Rxx(:,j) = data.turbulenceProperties_R_0;
     Ryy(:,j) = data.turbulenceProperties_R_1;
     Rxy(:,j) = data.turbulenceProperties_R_3;
 end
 
-% % To normalize Reynolds Stresses
-% for j = 2:length(xd)-1
-%     b_prime(j) = ((b(j-1)+b(j+1))*.5)/(((xd(j-1)+xd(j+1))*.5)*2*r_jet);
-%     Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-%     Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-%     Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-% end
+
+
+
+% To normalize Reynolds Stresses
+for j = 2:length(xd)-1
+    b_prime(j) = ((b(j-1)+b(j+1))*.5)/(((xd(j-1)+xd(j+1))*.5)*2*r_jet);
+    Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+    Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+    Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+end
 
 
 %% Collect comparison data & reorg for plotting
 load exp_data.mat;
+
 
 % % To inverse sign direction for exp data
 % exp_Rxy = -1*(exp_Rxy);
@@ -128,61 +132,61 @@ colormap = ["#e60049", "#0bb4ff", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#
 %% Plot Results and Figures
 close all
 
-% % Velocity data and non-dimensionalized
-% legend_array(1) = "Gaussian Shape Function";
-% legend_array(2) = "Schlicting Jet Equation";
+% Velocity data and non-dimensionalized
+legend_array(1) = "Gaussian Shape Function";
+legend_array(2) = "Schlicting Jet Equation";
 % legend_array(3) = "k-w SST M4";
-% legend_array(4) = "PIV Experimenal";
-% for j = 1:length(xd)-1
-%     % figure(j)             % Makes Individual figs for each xd
-%     subplot(2,3,j)          % plots on all one figure
-%     hold on
-%     fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 1);
-%     fplot(@(x) (1+x^2/2)^(-2),'*k',[-1.5 1.5], 'LineWidth', 0.8);
-%     plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(1), 'LineWidth', 1.5);
-%     plot(exp_zeta(:,exp_x_loc(find(exp_xd==xd(j)))), exp_f_zeta(:,exp_x_loc(find(exp_xd==xd(j)))),markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(1));
-%     eval(sprintf('title("x/D_{jet} = %s");', string(xd(j))));
-%     legend(legend_array)
-%     xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
-%     ylabel('$\frac{\overline{U}}{\overline{U}_{jet}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
-%     hYLabel = get(gca,'YLabel');
-%     set(hYLabel,'rotation',0,'VerticalAlignment','middle')
-%     grid on
-%     ylim([0 1])
-%     xlim([0 2])
-%     hold off
-% end
+% legend_array(3) = "PIV Experimenal";
 
-
-% Plot Reynolds Stresses
-figure(1)
-sgtitle({'Streamwise Normal Reynolds Shear Stresses'; ''}, 'FontSize', 16)
-legend_array(1) = "k-w SST M4";
-legend_array(2) = "PIV Experimenal";
-
-for j = 2:length(xd)-1
-    subplot(2,3,j-1)
+    figure(1)
+    % subplot(2,3,j)          % plots on all one figure
     hold on
-    plot(zeta(:,j), Rxx_norm(:,j), 'Color', colormap(j-1    ), 'LineWidth', 1.5)
-    % plot(zeta(j), Ryy_norm(:,j), 'Color', colormap(2), 'LineWidth', 1.5)
-    % plot(zeta(j), Rxy_norm(:,j), 'Color', colormap(3), 'LineWidth', 1.5)
-    plot(exp_zeta(:,exp_x_loc(find(exp_xd==xd(j)))), exp_Rxx_norm(:,j), markers(2),'MarkerSize',6,'MarkerEdgeColor', 'k', 'MarkerFaceColor',colormap(j-1))
-    hold off
-    xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14')
-    ylabel("$\frac{\overline{u'u'}}{{\overline{U_m}^2}{b^\prime}}\ \ \ \ \ \ \ $",'interpreter','latex', 'FontSize', 16)
-    % ylabel({'Reynolds\ \ \ \ \ \ \ \ \ \ \ '; 'Stresses\ \ \ \ \ \ \ \ \ \ \ '; 'Normalized\ \ \ \ \ \ \ \ \ \ \ '}, 'interpreter','latex', 'FontSize', 12')
+    fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 2.5);
+    fplot(@(x) (1+x^2/2)^(-2),'b',[-1.5 1.5], 'LineWidth', 2);
+
+    for j = 1:length(exp_xd)
+    legend_count = 2+j;
+    % plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(1), 'LineWidth', 1.5);
+    plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)),markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
+    eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f";', legend_count, exp_xd(j)));
+    end
+    legend(legend_array)
+    xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
+    ylabel('$\frac{\overline{U}}{\overline{U}_{m}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
     hYLabel = get(gca,'YLabel');
     set(hYLabel,'rotation',0,'VerticalAlignment','middle')
-    legend(legend_array)
-    % legend("$\overline{u'u'}$","$\overline{v'v'}$", "$\overline{u'v'}$",'interpreter','latex', 'FontSize', 14')
-    eval(sprintf('title("x/D_{jet} = %s");', string(xd(j))));
-    ylim auto
-    xlim([0 2.5])
     grid on
-    grid minor
+    ylim([0 1])
+    xlim([-2.5 2.5])
     hold off
 
-end
+
+% % Plot Reynolds Stresses
+% figure(1)
+% legend_array(1) = "k-w SST M4";
+% legend_array(2) = "PIV Experimenal";
+% 
+% for j = 2:length(xd)-1
+%     subplot(2,3,j-1)
+%     hold on
+%     plot(xd(j), b(j),'LineWidth', 1.5, 'Color', colormap(2))
+%     plot(zeta(j), Ryy_norm(:,j), 'Color', colormap(2), 'LineWidth', 1.5)
+%     plot(zeta(j), Rxy_norm(:,j), 'Color', colormap(3), 'LineWidth', 1.5)
+%     plot(exp_xd(find(exp_xd==xd(j))), exp_b(exp_x_loc(find(exp_xd==xd(j)))), 'LineWidth', 1.5, 'Color', colormap(3))
+% end
+%     xlabel('$x/D_{jet}','interpreter','latex', 'FontSize', 14')
+%     ylabel("$Half-Width:/ b\ \ \ \ $",'interpreter','latex', 'FontSize', 16)
+%     ylabel({'Reynolds\ \ \ \ \ \ \ \ \ \ \ '; 'Stresses\ \ \ \ \ \ \ \ \ \ \ '; 'Normalized\ \ \ \ \ \ \ \ \ \ \ '}, 'interpreter','latex', 'FontSize', 12')
+%     hYLabel = get(gca,'YLabel');
+%     set(hYLabel,'rotation',0,'VerticalAlignment','middle')
+%     eval(sprintf('title("x/D_{jet} = %s");', string(xd(j))));
+%      legend(legend_array)
+%     legend("$\overline{u'u'}$","$\overline{v'v'}$", "$\overline{u'v'}$",'interpreter','latex', 'FontSize', 14')
+%     ylim auto
+%     xlim([0 27.5])
+%     grid on
+%     grid minor
+
 
 % For multi Reynolds Plotting: 
 % plot(r_dimless, Rxx(:,j), '*k', 'MarkerIndices',1:15:length(r_dimless), 'MarkerSize',4,'MarkerEdgeColor',colormap(3))
