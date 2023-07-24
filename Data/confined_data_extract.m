@@ -1,4 +1,4 @@
-close all;
+% close all;
 clear;
 clc;
 
@@ -7,7 +7,7 @@ clc;
 rawI = 459; % Number of points in x-direction in raw data (found in header of .dat DaVis files)
 rawJ = 130; % Number of points in y-direction in raw data (found in header of .dat DaVis files)
 
-jet_diameter = 6.35;
+jet_diameter = 6.4;
 
 % 
 data = dlmread('B0001.dat',' ',4, 0);
@@ -43,6 +43,7 @@ u_secondary_index = zeros(rawI,1);
 u_secondary = zeros(rawI,1);
 u_excess = zeros(rawJ,rawI);
 u_centerline = zeros(rawI,1);
+v_centerline = zeros(1,rawI);
 u_normalized = zeros(rawJ,rawI);
 u_max = zeros(rawI,1);
 exclude = zeros(rawI,1); 
@@ -116,9 +117,11 @@ for i = 1:rawI
 
    %find centerline peak velocity
    if length(find(u_normalized(:,i)==1)) == 1
-       u_centerline(i) = u_g(find(u_normalized(:,i)==1),i); 
+       u_centerline(i) = u_g(find(u_normalized(:,i)==1),i);
+       v_centreline(i) = v_g(find(u_normalized(:,i)==1),i);
    else
        u_centerline(i) = 0;
+       v_centerline(i) = 0;
    end        
 end
 
@@ -155,7 +158,7 @@ y_normalized_1 = zeros(rawJ, rawI);
 
  %%
 
-x_locations_dx = linspace(0, 30, 12);
+x_locations_dx = linspace(12.5, 19, 5);
 x_locations = round((x_locations_dx*jet_diameter)/scale);
 markers = ["o" "s" "^" ">" "<" "*"];
 colormap = ["#003f5c"; "#665191";  "#d45087"; "#f95d6a"; "#ff7c43"; "#ffa600"];
