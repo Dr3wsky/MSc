@@ -7,7 +7,7 @@ clc;
 rawI = 459; % Number of points in x-direction in raw data (found in header of .dat DaVis files)
 rawJ = 130; % Number of points in y-direction in raw data (found in header of .dat DaVis files)
 
-jet_diameter = 6.4;
+jet_diameter = 6.35;
 
 % 
 data = dlmread('B0001.dat',' ',4, 0);
@@ -161,19 +161,19 @@ y_normalized_1 = zeros(rawJ, rawI);
 x_locations_dx = linspace(12.5, 19, 5);
 x_locations = round((x_locations_dx*jet_diameter)/scale);
 markers = ["o" "s" "^" ">" "<" "*"];
-colormap = ["#003f5c"; "#665191";  "#d45087"; "#f95d6a"; "#ff7c43"; "#ffa600"];
+colormap = ["#e60049", "#0bb4ff", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"];
 
 figure(1)
 hold on
 fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5]);
 fplot(@(x) (1+x^2/2)^(-2),'-b',[-1.5 1.5]);
-for i = 1:6
+for i = 1:5
     plot(y_normalized(:,x_locations(i)), u_normalized(:,x_locations(i)),markers(i),'MarkerSize',4,'MarkerEdgeColor',colormap(i))
 end
 hold off
-legend ('Gaussian Shape Function', 'Schlicting Jet eqn', 'x/d = 10', 'x/d = 12.5', 'x/d = 15', 'x/d = 17.5', 'x/d = 20', 'x/d = 22.5')
+legend ('Gaussian Shape Function', 'Schlicting Jet eqn', 'x/d = 12.5', 'x/d = 14.125', 'x/d = 15.75', 'x/d = 17.375', 'x/d = 19')
 xlabel('$\eta = r/b$','interpreter','latex')
-ylabel('$U/U_{m}$','interpreter','latex')
+ylabel('$\frac{\overbar{U}}{\overbar{U_{m}}}$','interpreter','latex')
 axis([-2.5 2.5 0 1])
 yticks(0:.25:1);
 box on
