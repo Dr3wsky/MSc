@@ -99,7 +99,7 @@ load exp_data.mat;
 
 % Assign xd array and find locations
 scale = exp_x_raw(1,2,1)-exp_x_raw(1,1,1);
-exp_xd = linspace(12.5, 19, 5);
+exp_xd = linspace(17.375, 23.875, 5);
 exp_x_loc= round((exp_xd*(r_jet*2*1000)/scale));
 
 % % Normalize y-component velocity
@@ -132,7 +132,7 @@ exp_x_loc= round((exp_xd*(r_jet*2*1000)/scale));
 
 
 
-markers = ["o" "s" "^" ">" "<" "*"];
+markers = ["o" "s" "^" ">" "<" "*" "+"];
 linetype = ["-" "--" ":" "-." "-" "--" ":" "-."];
 colormap = ["#e60049", "#0bb4ff", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"];
 
@@ -155,7 +155,7 @@ close all
 %     legend_count = 2+j;
 %     % plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(1), 'LineWidth', 1.5);
 %     plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)),markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
-%     eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f";', legend_count, exp_xd(j)));
+%     eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f PIV Experiment";', legend_count, exp_xd(j)));
 % end
 % legend(legend_array)
 % xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
@@ -174,23 +174,30 @@ legend_array(2) = "Schlicting Jet Equation";
 figure(1)
 % subplot(2,3,j)          % plots on all one figure
 hold on
-fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 2.5);
-fplot(@(x) (1+x^2/2)^(-2),'b',[-1.5 1.5], 'LineWidth', 2);
-legend_offset = 5;
+fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 2);
+fplot(@(x) (1+x^2/2)^(-2),'b',[-1.5 1.5], 'LineWidth', 1.5);
+legend(legend_array(1:2))
+
+% Plot CFD vs. experimental data  
 for j = 1:length(xd)
-    legend_count = 2+j;
-    plot(zeta(:,j), f_zeta(:,j), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j), 'MarkerIndices',1:25:length(f_zeta));
-    % plot(-zeta(:,j), f_zeta(:,j), linetype(j),'Color', colormap(j), 'LineWidth', 2);
-    eval(sprintf('legend_array(%d) = "CFD k-w SST, x/D_{jet} = %0.3f";', legend_count, xd(j)));
-    % plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
-    % eval(sprintf('legend_array(%d) = "PIV Experiment, x/D_{jet} = %0.3f";', legend_offset, exp_xd(j)));
+
+    legend_count = 1+(2*j);
+    legend_append = legend_count + 1;
+    plot(zeta(:,j), f_zeta(:,j), linetype(j),'Color', colormap(j), 'LineWidth', 1.5);
+    eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f CFD k-w SST,";', legend_count, xd(j)));
+    plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
+    eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f PIV Experiment";', legend_append, exp_xd(j)));
+    legend(legend_array(1:legend_append))
 end
+
 %Plot reverse side as well
 for j = 1:length(xd)
-    plot(-zeta(:,j), f_zeta(:,j), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j), 'MarkerIndices',1:25:length(f_zeta));
+    plot(-zeta(:,j), f_zeta(:,j), linetype(j),'Color', colormap(j), 'LineWidth', 1.5);
+    % plot(-zeta(:,j), f_zeta(:,j), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j), 'MarkerIndices',1:25:length(f_zeta));
 end
+
 hold off
-legend(legend_array(1:7))
+legend(legend_array(1:12))
 xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
 ylabel('$\frac{\overline{U}}{\overline{U}_{m}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
 hYLabel = get(gca,'YLabel');
