@@ -19,9 +19,6 @@ UPrime_2_Mean_legend = ["UPrime2Mean_xx", "UPrime2Mean_xy", "UPrime2Mean_xz", "U
 r_jet = 0.0032;
 r_tube = 0.0254;
 
-markers = ["o" "s" "^" ">" "<" "*"];
-colormap = ["#f1c40f"; "#e67e22"; "#f51818"; "#f03acb"; "#8e44ad";  "#3498db"; "#2ecc71"];
-
 %% Read Data 
 j=0;
 i=0;
@@ -30,10 +27,10 @@ names = data_0.Properties.VariableNames;
 r_dimless = data_0.Points_1/data_0.Points_1(end);
 x_var = "UMean_0";
 
-for i = 7.5:2.5:25                                                   
+for i = 17.375:1.625:23.875                                                 
     j = j + 1;
     xd(j) = i;                                                                                  % Assign radial position array
-    data = readtable(strcat(loc, type, sprintf('%0.1f',xd(j)), '.csv'), 'Format','auto');       % Non-dimensionalize radial position
+    data = readtable(strcat(loc, type, sprintf('%0.3f',xd(j)), '.csv'), 'Format','auto');       % Non-dimensionalize radial position
 %     u_mag = sqrt((data.U_0.^2) + (data.U_1.^2) + (data.U_2.^2));                              % Calculate overall U_magnitude
 
     eval(sprintf("%s(:,%d) = data.%s;", x_var, j, x_var))                                       % Plot line
@@ -41,7 +38,7 @@ for i = 7.5:2.5:25
     %% Find location and calculate secondary stream for radial pos
     u_m(j) = max(data.UMean_0(j));                                                                 % Absolute max jet velocity
     counter = 0;
-    if (xd(j)<22.5)
+    if (xd(j)<20.5)
         for k = find(r_dimless>=(r_jet/r_tube),1):find(r_dimless>=0.9,1)
             counter = counter+1;
             UMean_0_trimmed(k-126,j) = UMean_0(k-126,j);  
@@ -88,17 +85,27 @@ end
 
 
 
-% To normalize Reynolds Stresses
-for j = 2:length(xd)-1
-    b_prime(j) = ((b(j-1)+b(j+1))*.5)/(((xd(j-1)+xd(j+1))*.5)*2*r_jet);
-    Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-    Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-    Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
-end
+% % To normalize Reynolds Stresses
+% for j = 2:length(xd)-1
+%     b_prime(j) = ((b(j-1)+b(j+1))*.5)/(((xd(j-1)+xd(j+1))*.5)*2*r_jet);
+%     Rxx_norm(:,j) = Rxx(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+%     Rxy_norm(:,j) = Rxy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+%     Ryy_norm(:,j) = Ryy(:,j)/((U_excess_centreline(j)^2)*b_prime(j));
+% end
 
 
 %% Collect comparison data & reorg for plotting
 load exp_data.mat;
+
+% Assign xd array and find locations
+scale = exp_x_raw(1,2,1)-exp_x_raw(1,1,1);
+exp_xd = linspace(12.5, 19, 5);
+exp_x_loc= round((exp_xd*(r_jet*2*1000)/scale));
+
+% % Normalize y-component velocity
+% for i = 1:length(exp_v_centreline)
+% exp_Vnorm(:,i) = exp_v(:,i)/exp_v_centreline(i);
+% end
 
 
 % % To inverse sign direction for exp data
@@ -126,39 +133,73 @@ load exp_data.mat;
 
 
 markers = ["o" "s" "^" ">" "<" "*"];
-
+linetype = ["-" "--" ":" "-." "-" "--" ":" "-."];
 colormap = ["#e60049", "#0bb4ff", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"];
 
 %% Plot Results and Figures
 close all
 
-% Velocity data and non-dimensionalized
+% % % Plot Ken's data to recreate figs from manuscript
+% % Initialize Legend array
+% legend_array(1) = "Gaussian Shape Function";
+% legend_array(2) = "Schlicting Jet Equation";
+% 
+% figure (1)
+% hold on
+% % Plot reference relations
+% fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 2.5);
+% fplot(@(x) (1+x^2/2)^(-2),'b',[-1.5 1.5], 'LineWidth', 2);
+% 
+% % Loop through each xd position
+% for j = 1:length(exp_xd)
+%     legend_count = 2+j;
+%     % plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(1), 'LineWidth', 1.5);
+%     plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)),markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
+%     eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f";', legend_count, exp_xd(j)));
+% end
+% legend(legend_array)
+% xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
+% ylabel('$\frac{\overline{U}}{\overline{U}_{m}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
+% hYLabel = get(gca,'YLabel');
+% set(hYLabel,'rotation',0,'VerticalAlignment','middle')
+% grid on
+% ylim([0 1])
+% xlim([-2.5 2.5])
+
+
+% Plot non-dimaensionalized velocity comparison
 legend_array(1) = "Gaussian Shape Function";
 legend_array(2) = "Schlicting Jet Equation";
-% legend_array(3) = "k-w SST M4";
-% legend_array(3) = "PIV Experimenal";
 
-    figure(1)
-    % subplot(2,3,j)          % plots on all one figure
-    hold on
-    fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 2.5);
-    fplot(@(x) (1+x^2/2)^(-2),'b',[-1.5 1.5], 'LineWidth', 2);
-
-    for j = 1:length(exp_xd)
+figure(1)
+% subplot(2,3,j)          % plots on all one figure
+hold on
+fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 2.5);
+fplot(@(x) (1+x^2/2)^(-2),'b',[-1.5 1.5], 'LineWidth', 2);
+legend_offset = 5;
+for j = 1:length(xd)
     legend_count = 2+j;
-    % plot(zeta(:,j), f_zeta(:,j), 'Color', colormap(1), 'LineWidth', 1.5);
-    plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)),markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
-    eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f";', legend_count, exp_xd(j)));
-    end
-    legend(legend_array)
-    xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
-    ylabel('$\frac{\overline{U}}{\overline{U}_{m}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
-    hYLabel = get(gca,'YLabel');
-    set(hYLabel,'rotation',0,'VerticalAlignment','middle')
-    grid on
-    ylim([0 1])
-    xlim([-2.5 2.5])
-    hold off
+    plot(zeta(:,j), f_zeta(:,j), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j), 'MarkerIndices',1:25:length(f_zeta));
+    % plot(-zeta(:,j), f_zeta(:,j), linetype(j),'Color', colormap(j), 'LineWidth', 2);
+    eval(sprintf('legend_array(%d) = "CFD k-w SST, x/D_{jet} = %0.3f";', legend_count, xd(j)));
+    % plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
+    % eval(sprintf('legend_array(%d) = "PIV Experiment, x/D_{jet} = %0.3f";', legend_offset, exp_xd(j)));
+end
+%Plot reverse side as well
+for j = 1:length(xd)
+    plot(-zeta(:,j), f_zeta(:,j), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j), 'MarkerIndices',1:25:length(f_zeta));
+end
+hold off
+legend(legend_array(1:7))
+xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
+ylabel('$\frac{\overline{U}}{\overline{U}_{m}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
+hYLabel = get(gca,'YLabel');
+set(hYLabel,'rotation',0,'VerticalAlignment','middle')
+grid on
+ylim([0 1.05])
+xlim([-2.5 2.5])
+
+%% Plot b_relation
 
 
 % % Plot Reynolds Stresses
