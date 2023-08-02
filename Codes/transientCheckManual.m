@@ -1,6 +1,7 @@
 clc
 close all
 clear all
+format longg
 
 %% Load Folder Structure
 start = 7;
@@ -86,9 +87,27 @@ for i = vars
         else
             pp_data = cat(2, pp_data, temp_data(:, 2:end));
         end
-
     end
-
-
 end
+
+%% Transient Data Analysis
+format longg
+
+% Variable of interest
+time_var = pp_data.time;
+y_vars = [pp_data.probe1250_U_1, pp_data.probe1250_U_2, pp_data.probe1250_UMean_2, pp_data.probe1250_UMean_1, pp_data.probe1250_k, pp_data.jetOutletFlow];
+
+for i = 1:length(y_vars) 
+    % Find periodicity
+    [pks,locs] = findpeaks(y_vars(:,i), time_var);
+    period(i) = max(diff(locs));
+end
+
+
+
+
+
+
+
+
 
