@@ -15,6 +15,7 @@ tube_length = 0.91
 end = x_pos + tube_length
 y_pos = float(input('specify radial midpoint coords for y-centroid'))
 z_pos = float(input('specify centripidal midpoint coords for z-centroid'))
+end_time = float(input('Specify end time'))
 
 # get active source.
 pIVfoam = GetActiveSource()
@@ -22,13 +23,13 @@ pIVfoam = GetActiveSource()
 # set active source
 SetActiveSource(pIVfoam)
 
-UpdatePipeline(time=0.009999999999919473, proxy=pIVfoam)
+UpdatePipeline(time=end_time, proxy=pIVfoam)
 
 # get animation scene
 animationScene1 = GetAnimationScene()
 
 # Properties modified on animationScene1
-animationScene1.AnimationTime = 0.09999999999991947
+animationScene1.AnimationTime = end_time
 
 # get the time-keeper
 timeKeeper1 = GetTimeKeeper()
@@ -38,7 +39,7 @@ plotOverLine1 = PlotOverLine(registrationName='PlotOverLine1', Input=pIVfoam)
 plotOverLine1.Point1 = [x_pos, y_pos, z_pos]
 plotOverLine1.Point2 = [end, y_pos, z_pos]
 
-UpdatePipeline(time=0.09999999999991947, proxy=plotOverLine1)
+UpdatePipeline(time=end_time, proxy=plotOverLine1)
 
 # save data
 SaveData('C:/Users/drewm/Documents/2.0 MSc/2.0 Simulations/' + sim + '/axial_data.csv', proxy=plotOverLine1, ChooseArraysToWrite=1,

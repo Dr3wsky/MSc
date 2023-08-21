@@ -9,6 +9,7 @@ from paraview.simple import *
 sim = input('Specify simulation folder')
 x_d = float(input('Specify the start position non-dim'))
 x_pos = 0.33533+(x_d*0.0064)
+end_time = float(input('Specify end time'))
 
 #### disable automatic camera reset on 'Show'
 paraview.simple._DisableFirstRenderCameraReset()
@@ -19,14 +20,14 @@ pIVfoam = GetActiveSource()
 # set active source
 SetActiveSource(pIVfoam)
 
-UpdatePipeline(time=0.09999999999991947, proxy=pIVfoam)
+UpdatePipeline(time=end_time, proxy=pIVfoam)
 
 # create a new 'Plot Over Line'
 plotOverLine1 = PlotOverLine(registrationName='PlotOverLine1', Input=pIVfoam)
 plotOverLine1.Point1 = [x_pos, 0.0, 0.0]
 plotOverLine1.Point2 = [x_pos, 0.025396, 0.0011075]
 
-UpdatePipeline(time=0.09999999999991947, proxy=plotOverLine1)
+UpdatePipeline(time=end_time, proxy=plotOverLine1)
 
 # save data
 SaveData('C:/Users/drewm/Documents/2.0 MSc/2.0 Simulations/' + sim + '/radial_data_xd_' + str(x_d) + '.csv', proxy=plotOverLine1, ChooseArraysToWrite=1,
