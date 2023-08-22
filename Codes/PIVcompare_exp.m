@@ -12,8 +12,8 @@ clear all
 
 %% Define Working Space and Variables 
 mesh = 4;
-model = 'LRR';
 loc = strcat('C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\PIV_JetSim_M', string(mesh),'\');
+model = 'LRR';
 loc_rsm = strcat('C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\RSM_', string(model),'\');
 type = "radial_data_xd_";
 R_stress_legend = ["Rxx", "Ryy", "Rzz", "Rxy", "Ryz", "Rxz"];
@@ -43,6 +43,7 @@ for i = 0:2.5:30
     eval(sprintf("%s_rsm(:,%d) = data_rsm.%s;", x_var2, j, x_var2)) 
     
     %% Find location and calculate secondary stream for radial pos
+    % Every calculation is repeated for RSM dataset
     u_m(j) = max(data.UMean_0(j));                                                                 % Absolute max jet velocity
     u_m_rsm(j) = max(data_rsm.UMean_0(j)); 
     counter = 0;
@@ -78,22 +79,46 @@ for i = 0:2.5:30
     U_excess_centreline(j) = max(U_excess(:,j));
     close(figure)
 
+    % Repeat with RSM data for secondary velocity
+    h_rsm = histogram(UMean_0_rsm_trimmed(:,j), 'BinWidth', 0.1);
+    holder_rsm = h_rsm.Values;
+    idx_rsm = find(holder_rsm == max(h_rsm.Values));                        % index tallest bin (y value)
+    U2_rsm(j) = mean(h_rsm.BinEdges(idx_rsm));                              % param value of tallex bin
+    if (xd(j)==25)                                                          % Manually asssign U2 for xd = 25
+        U2_rsm(j) = 32;
+    end
+    U_excess_rsm(:,j) = UMean_0_rsm(:,j) - U2_rsm(j);
+    U_excess_centreline_rsm(j) = max(U_excess_rsm(:,j));
+    close(figure)
+
     %% Find half-width and non-dimensionalize
+    % rsm calcs repeated immediately below
     b_vel(j) = U_excess_centreline(j)/2;
+    b_vel_rsm(j) = U_excess_centreline_rsm(j)/2;
     b_ind(j) = find(U_excess(:,j) < b_vel(j), 1, "first");
+    b_ind_rsm(j) = find(U_excess_rsm(:,j) < b_vel_rsm(j), 1, "first");
     b(j) = data.Points_1(b_ind(j));
+    b_rsm(j) = data.Points_1(b_ind_rsm(j));
     b_dimless(j) = b_ind(j)/length(r_dimless);
+    b_dimless_rsm(j) = b_ind_rsm(j)/length(r_dimless);
     % b(j) = b_dimless(j)*r_tube;
     zeta(:,j) = data.Points_1/b(j);
+    zeta_rsm(:,j) = data.Points_1/b_rsm(j);
     f_zeta(:,j) = U_excess(:,j)/U_excess_centreline(j);
+    f_zeta_rsm(:,j) = U_excess_rsm(:,j)/U_excess_centreline_rsm(j);
     V_norm(:,j) = UMean_1(:,j)/U_excess_centreline(j);
+    V_norm_rsm(:,j) = UMean_1_rsm(:,j)/U_excess_centreline_rsm(j);
+
 
     
 
     %% Pull Reynolds Stresses & Normalize
     Rxx(:,j) = data.turbulenceProperties_R_0;
+    Rxx_rsm(:,j) = data_rsm.RMean_0;
     Ryy(:,j) = data.turbulenceProperties_R_1;
+    Ryy_rsm(:,j) = data_rsm.RMean_1;
     Rxy(:,j) = data.turbulenceProperties_R_3;
+    Rxy_rsm(:,j) = data_rsm.RMean_3;
 end
 
 
@@ -118,7 +143,7 @@ exp_x_loc= round((exp_xd*(r_jet*2*1000)/scale));
 
 % Normalize y-component velocity
 for i = 1:length(exp_u_centreline)
-exp_V_norm(:,i) = exp_v(:,i)/exp_u_centreline(i);
+exp_v_norm(:,i) = exp_v(:,i)/exp_u_centreline(i);
 end
 
 
