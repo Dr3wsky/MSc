@@ -12,7 +12,9 @@ clear all
 
 %% Define Working Space and Variables 
 mesh = 4;
+model = 'LRR';
 loc = strcat('C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\PIV_JetSim_M', string(mesh),'\');
+loc_rsm = strcat('C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\RSM_', string(model),'\');
 type = "radial_data_xd_";
 R_stress_legend = ["Rxx", "Ryy", "Rzz", "Rxy", "Ryz", "Rxz"];
 UPrime_2_Mean_legend = ["UPrime2Mean_xx", "UPrime2Mean_xy", "UPrime2Mean_xz", "UPrime2Mean_yy", "UPrime2Mean_yz", "UPrime2Mean_zz"];
@@ -26,32 +28,40 @@ data_0 = readtable(strcat(loc, type, '0.0', '.csv'), 'Format','auto');
 names = data_0.Properties.VariableNames;
 r_dimless = data_0.Points_1/data_0.Points_1(end);
 x_var = "UMean_0";
-x_var2 = "UMean_1"
+x_var2 = "UMean_1";
 
-for i = 12.5:1.625:25.5                                                
+for i = 0:2.5:30                                                
     j = j + 1;
     xd(j) = i;                                                                                  % Assign radial position array
-    data = readtable(strcat(loc, type, sprintf('%0.3f',xd(j)), '.csv'), 'Format','auto');       % Non-dimensionalize radial position
+    data = readtable(strcat(loc, type, sprintf('%0.1f',xd(j)), '.csv'), 'Format','auto');    
+    data_rsm = readtable(strcat(loc_rsm, type, sprintf('%0.1f',xd(j)), '.csv'), 'Format','auto');
 %     u_mag = sqrt((data.U_0.^2) + (data.U_1.^2) + (data.U_2.^2));                              % Calculate overall U_magnitude
 
     eval(sprintf("%s(:,%d) = data.%s;", x_var, j, x_var))       
     eval(sprintf("%s(:,%d) = data.%s;", x_var2, j, x_var2)) 
+    eval(sprintf("%s_rsm(:,%d) = data_rsm.%s;", x_var, j, x_var))       
+    eval(sprintf("%s_rsm(:,%d) = data_rsm.%s;", x_var2, j, x_var2)) 
     
     %% Find location and calculate secondary stream for radial pos
     u_m(j) = max(data.UMean_0(j));                                                                 % Absolute max jet velocity
+    u_m_rsm(j) = max(data_rsm.UMean_0(j)); 
     counter = 0;
     if (xd(j)<20.5)
         for k = find(r_dimless>=(r_jet/r_tube),1):find(r_dimless>=0.9,1)
             counter = counter+1;
-            UMean_0_trimmed(k-126,j) = UMean_0(k-126,j);  
-            UMean_0_trimmed(UMean_0_trimmed<= 0.5) = NaN;                   % Trim jet and wall effects
-            r_trimmed(counter) = k/length(r_dimless);                       % Remove zeros for histogram
+            UMean_0_trimmed(k-126,j) = UMean_0(k-126,j);                    % Trim jet and wall effects
+            UMean_0_rsm_trimmed(k-126,j) = UMean_0_rsm(k-126,j);
+            UMean_0_trimmed(UMean_0_trimmed<= 0.5) = NaN;                   % Remove zeros for histogram
+            UMean_0_rsm_trimmed(UMean_0_rsm_trimmed<= 0.5) = NaN; 
+            r_trimmed(counter) = k/length(r_dimless);                       
         end
     else 
          for k = find(r_dimless>=3*(r_jet/r_tube),1):find(r_dimless>=0.95,1)
             counter = counter+1;
             UMean_0_trimmed(k,j) = UMean_0(k,j);                            % Trim jet and wall effects
+            UMean_0_rsm_trimmed(k,j) = UMean_0_rsm(k,j); 
             UMean_0_trimmed(UMean_0_trimmed<= 0.5) = NaN;                   % Remove zeros for histogram
+            UMean_0_rsm_trimmed(UMean_0_rsm_trimmed<= 0.5) = NaN;
             r_trimmed(counter) = k/length(r_dimless);
          end
     end
@@ -143,7 +153,7 @@ colormap = ["#e60049", "#0bb4ff", "#50e991", "#9b19f5", "#ffa300", "#dc0ab4", "#
 %% Plot Results and Figures
 close all
 
-% % % Plot Ken's data to recreate figs from manuscript
+%% Ken's data to recreate figs from manuscript
 % % Initialize Legend array
 % legend_array(1) = "Gaussian Shape Function";
 % legend_array(2) = "Schlicting Jet Equation";
@@ -171,53 +181,56 @@ close all
 % xlim([-2.5 2.5])
 
 
-% Plot non-dimaensionalized velocity comparison
+%% Plot non-dimaensionalized velocity comparison
 % legend_array(1) = "Gaussian Shape Function";
 % legend_array(2) = "Schlicting Jet Equation";
-
-figure(1)
+% 
+% figure(1)
 % subplot(2,3,j)          % plots on all one figure
-hold on
+% hold on
 % fplot(@(x) exp(-log(2)*x^2),'--k',[-2.5 2.5], 'LineWidth', 2);
 % fplot(@(x) (1+x^2/2)^(-2),'b',[-1.5 1.5], 'LineWidth', 1.5);
 % legend(legend_array(1:2))
-
-% Plot CFD vs. experimental data  
-for j = 1:length(exp_xd)
-    legend_count = j;
-    legend_append = legend_count + 1;
-    % plot(zeta(:,j), V_norm(:,j), linetype(j),'Color', colormap(j), 'LineWidth', 1.5);
-    % eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f CFD k-w SST,";', legend_count, xd(j)));
-     plot(exp_zeta(:,exp_x_loc(j)), exp_V_norm(:,exp_x_loc(j)), linetype(j),'Color', colormap(j), 'LineWidth', 1.5);
-    eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f PIV Experiment";', legend_count, exp_xd(j)));
-end
+% 
+% % Plot CFD vs. experimental data  
+% for j = 1:length(xd)
+%     legend_count = j;
+%     legend_append = legend_count + 1;
+%     plot(zeta(:,j), -V_norm(:,j), linetype(j),'Color', colormap(j), 'LineWidth', 1.5);
+%     eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f CFD k-w SST,";', legend_count, xd(j)));
+%      plot(exp_zeta(:,exp_x_loc(j)), exp_V_norm(:,exp_x_loc(j)), linetype(j),'Color', colormap(j), 'LineWidth', 1.5);
+%     eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f PIV Experiment";', legend_count, exp_xd(j)));
+% end
 % for j = 1:length(exp_xd)
 %     legend_count = legend_count + 1;
 %     plot(exp_zeta(:,exp_x_loc(j)), exp_f_zeta(:,exp_x_loc(j)), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j));
 %     eval(sprintf('legend_array(%d) = "x/D_{jet} = %0.3f PIV Experiment";', legend_count, exp_xd(j)));
 % end
-legend(legend_array(1:legend_count))
-
+% 
 % % Plot reverse side as well
 % for j = 1:length(xd)
-%     legend_count = legend_count + j;
 %     plot(-zeta(:,j), V_norm(:,j), linetype(j),'Color', colormap(j), 'LineWidth', 1.5);
 %     plot(-zeta(:,j), f_zeta(:,j), markers(j),'MarkerSize',8,'MarkerEdgeColor', colormap(j), 'MarkerIndices',1:25:length(f_zeta));
 % end
+% 
+% hold off
+% legend(legend_array(1:length(xd)))
+% xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
+% ylabel('$\frac{V}{\overline{U}_{m}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
+% hYLabel = get(gca,'YLabel');
+% set(hYLabel,'rotation',0,'VerticalAlignment','middle')
+% grid on
+% ylim([-0.02 .02])
+% xlim([-2.5 2.5])
 
-hold off
-xlabel('$\eta = r/b$','interpreter','latex', 'FontSize', 14)
-ylabel('$\frac{V}{\overline{U}_{m}}\ \ \ \ \ $','interpreter','latex', 'FontSize', 18)
-hYLabel = get(gca,'YLabel');
-set(hYLabel,'rotation',0,'VerticalAlignment','middle')
-grid on
-ylim([-0.02 .02])
-xlim([-2.5 2.5])
-
-%% Plot b_relation
+%% Half-width
+figure(1)
+hold on 
+plot(xd, b, '-s', 'Color', colormap(1), 'LineWidth', 1.5)
+plot(exp_xd_all, exp_b, "*", 'Color', colormap(2))
 
 
-% % Plot Reynolds Stresses
+%% Reynolds Stresses
 % figure(1)
 % legend_array(1) = "k-w SST M4";
 % legend_array(2) = "PIV Experimenal";
