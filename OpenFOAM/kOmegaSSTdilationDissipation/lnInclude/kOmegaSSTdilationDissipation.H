@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::RASModels::kOmegaSSTdilationDissipation
+    Foam::RASModels::kOmegaSST
 
 Group
     grpRASTurbulence
@@ -101,7 +101,7 @@ Description
     \endverbatim
 
 SourceFiles
-    kOmegaSSTdilationDissipation.C
+    kOmegaSST.C
 
 SeeAlso
     kOmegaSSTBase.H
@@ -123,7 +123,7 @@ namespace RASModels
 {
 
 /*---------------------------------------------------------------------------*\
-                Class kOmegaSSTdilationDissipation Declaration
+                          Class kOmegaSST Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class BasicTurbulenceModel>
@@ -154,8 +154,6 @@ public:
     typedef typename BasicTurbulenceModel::rhoField rhoField;
     typedef typename BasicTurbulenceModel::transportModel transportModel;
 
-    // Added from kOmegaSSTBase.H
-    virtual void correct();
 
     //- Runtime type information
     TypeName("kOmegaSSTdilationDissipation");
@@ -179,6 +177,9 @@ public:
 
     //- Destructor
     virtual ~kOmegaSSTdilationDissipation() = default;
+    
+    //- Solve the turbulence equations and correct the turbulence viscosity
+    virtual void correct();
 };
 
 

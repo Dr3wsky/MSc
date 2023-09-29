@@ -90,15 +90,20 @@ kOmegaSSTdilationDissipation<BasicTurbulenceModel>::kOmegaSSTdilationDissipation
     }
 }
 
-// Added from kOmegaSSTBase.C
-template<class BasicEddyViscosityModel>
-void kOmegaSSTBase<BasicEddyViscosityModel>::correct()
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+template<class BasicTurbulenceModel>
+void kOmegaSSTdilationDissipation<BasicTurbulenceModel>::correct()
 {
-    Info << "Running dis bitch right here" << endl;
     if (!this->turbulence_)
     {
         return;
     }
+    
+    // Output statements to confirm use
+    Info << "----------------------------------------------" << endl;
+    Info << "RUNNING kONegaSSTdilationDissipation" << endl;
+    Info << "----------------------------------------------" << endl;
 
     // Local references
     const alphaField& alpha = this->alpha_;
@@ -107,8 +112,10 @@ void kOmegaSSTBase<BasicEddyViscosityModel>::correct()
     const volVectorField& U = this->U_;
     volScalarField& nut = this->nut_;
     fv::options& fvOptions(fv::options::New(this->mesh_));
+    
+    
 
-    BasicEddyViscosityModel::correct();
+    BasicTurbulenceModel::correct();
 
     volScalarField::Internal divU(fvc::div(fvc::absolute(this->phi(), U)));
 
@@ -122,11 +129,11 @@ void kOmegaSSTBase<BasicEddyViscosityModel>::correct()
     volScalarField::Internal G(this->GName(), nut*GbyNu0);
 
     // Update omega and G at the wall
-    omega_.boundaryFieldRef().updateCoeffs();
+    this->omega_.boundaryFieldRef().updateCoeffs();
 
     volScalarField CDkOmega
     (
-        (2*alphaOmega2_)*(fvc::grad(k_) & fvc::grad(omega_))/omega_
+        (2*this->alphaOmega2_)*(fvc::grad(this->k_) & fvc::grad(this->omega_))/this->omega_
     );
 
     volScalarField F1(this->F1(CDkOmega));
@@ -136,50 +143,50 @@ void kOmegaSSTBase<BasicEddyViscosityModel>::correct()
         volScalarField::Internal gamma(this->gamma(F1));
         volScalarField::Internal beta(this->beta(F1));
 
-        GbyNu0 = GbyNu(GbyNu0, F23(), S2());
+        GbyNu0 = this->GbyNu(GbyNu0, F23(), S2());
 
         // Turbulent frequency equation
         tmp<fvScalarMatrix> omegaEqn
         (
-            fvm::ddt(alpha, rho, omega_)
-          + fvm::div(alphaRhoPhi, omega_)
-          - fvm::laplacian(alpha*rho*DomegaEff(F1), omega_)
+            fvm::ddt(alpha, rho, this->omega_)
+          + fvm::div(alphaRhoPhi, this->omega_)
+          - fvm::laplacian(alpha*rho*this->DomegaEff(F1), this->omega_)
          ==
             alpha()*rho()*gamma*GbyNu0
-          - fvm::SuSp((2.0/3.0)*alpha()*rho()*gamma*divU, omega_)
-          - fvm::Sp(alpha()*rho()*beta*omega_(), omega_)
+          - fvm::SuSp((2.0/3.0)*alpha()*rho()*gamma*divU, this->omega_)
+          - fvm::Sp(alpha()*rho()*beta*this->omega_(), this->omega_)
           - fvm::SuSp
             (
-                alpha()*rho()*(F1() - scalar(1))*CDkOmega()/omega_(),
-                omega_
+                alpha()*rho()*(F1() - scalar(1))*CDkOmega()/this->omega_(),
+                this->omega_
             )
-          + alpha()*rho()*beta*sqr(omegaInf_)
-          + Qsas(S2(), gamma, beta)
-          + omegaSource()
-          + fvOptions(alpha, rho, omega_)
+          + alpha()*rho()*beta*sqr(this->omegaInf_)
+          + this->Qsas(S2(), gamma, beta)
+          + this->omegaSource()
+          + fvOptions(alpha, rho, this->omega_)
         );
 
         omegaEqn.ref().relax();
         fvOptions.constrain(omegaEqn.ref());
-        omegaEqn.ref().boundaryManipulate(omega_.boundaryFieldRef());
+        omegaEqn.ref().boundaryManipulate(this->omega_.boundaryFieldRef());
         solve(omegaEqn);
-        fvOptions.correct(omega_);
-        bound(omega_, this->omegaMin_);
+        fvOptions.correct(this->omega_);
+        bound(this->omega_, this->omegaMin_);
     }
 
     // Turbulent kinetic energy equation
     tmp<fvScalarMatrix> kEqn
     (
-        fvm::ddt(alpha, rho, k_)
-      + fvm::div(alphaRhoPhi, k_)
-      - fvm::laplacian(alpha*rho*DkEff(F1), k_)
+        fvm::ddt(alpha, rho, this->k_)
+      + fvm::div(alphaRhoPhi, this->k_)
+      - fvm::laplacian(alpha*rho*this->DkEff(F1), this->k_)
      ==
-        alpha()*rho()*Pk(G)
-      - fvm::SuSp((2.0/3.0)*alpha()*rho()*divU, k_)
-      - fvm::Sp(alpha()*rho()*epsilonByk(F1, tgradU()), k_)
-      + alpha()*rho()*betaStar_*omegaInf_*kInf_
-      + kSource()
-      + fvOptions(alpha, rho, k_)
+        alpha()*rho()*this->Pk(G)
+      - fvm::SuSp((2.0/3.0)*alpha()*rho()*divU, this->k_)
+      - fvm::Sp(alpha()*rho()*this->epsilonByk(F1, tgradU()), this->k_)
+      + alpha()*rho()*this->betaStar_*this->omegaInf_*this->kInf_
+      + this->kSource()
+      + fvOptions(alpha, rho, this->k_)
     );
 
     tgradU.clear();
@@ -187,19 +194,11 @@ void kOmegaSSTBase<BasicEddyViscosityModel>::correct()
     kEqn.ref().relax();
     fvOptions.constrain(kEqn.ref());
     solve(kEqn);
-    fvOptions.correct(k_);
-    bound(k_, this->kMin_);
+    fvOptions.correct(this->k_);
+    bound(this->k_, this->kMin_);
 
     correctNut(S2);
 }
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-
-
-
-
 } // End namespace RASModels
 } // End namespace Foam
 
