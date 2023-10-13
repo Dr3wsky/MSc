@@ -1,0 +1,22 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  v2012
+    \\  /    A nd           | Website:  www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Calculates specified turbulence fields, specifically the Reynolds Stress Tensor,  and stores it on the database.
+
+\*---------------------------------------------------------------------------*/
+
+type            turbulenceFields;
+libs            ("libfieldFunctionObjects.so");
+
+fields          (omega);
+
+executeControl  timeStep;
+writeControl    writeTime;
+
+// ************************************************************************* //
+

@@ -1,0 +1,20 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Web:      www.OpenFOAM.org
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Calculates the average value of one or more fields on a patch.
+
+\*---------------------------------------------------------------------------*/
+
+name    tubeInlet_intB;
+fields  (p T rho U);
+
+operation weightedAreaAverage;
+weightField rho;
+#includeEtc "caseDicts/postProcessing/surfaceFieldValue/patch.cfg"
+
+// ************************************************************************* //

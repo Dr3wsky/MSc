@@ -1,10 +1,15 @@
 clear;
 clc;
 close all;
+nInterval = 2;
 
-nInterval = 1000;
-nRuns = 7;              % Enter the number of sim runs to index last run
-nStart = 9;
+averagingInterval = 0.01;
+finalAveragePeriod = 0.05;
+
+nRuns = 4;              % Enter the number of sim runs to index last run
+nStart = 4;
+
+
 % For residuals plot to work, must have nStart>=2 with RSM models. This is
 % due to the fact that the residual datastore changes between RSM and RANS
 % model.
@@ -12,12 +17,12 @@ axesNumfontsize = 15;
 
 %% Data Read
 
-allFolder = dir(append(pwd,'\postProcessing-1'));
-allTimes = dir(append(pwd,'\postProcessing-1','\',allFolder(3).name));
+allFolder = dir(append(pwd,'\postProcessing-', string(nStart)));
+allTimes = dir(append(pwd,'\postProcessing-7','\',allFolder(3).name));
 
 % Appending to allTimes directory
 rows = length(allTimes);
-for i = 2:nRuns
+for i = nStart:nRuns
     rows = rows+1;
     tempDir = dir(append(pwd,'/postProcessing-',num2str(i),'/',allFolder(3).name));
     allTimes(rows).name = tempDir(3).name;
@@ -28,6 +33,7 @@ for i = 2:nRuns
     allTimes(rows).datenum = tempDir(3).datenum;
 end
 
+count = 0;
 for run=nStart:nRuns
     for fold=3:length(allFolder)
         if fold==3
@@ -36,14 +42,11 @@ for run=nStart:nRuns
             vars=[vars,string(allFolder(fold).name)];
         end
 
-        for time=3:length(allTimes)
-            if fold==3
-                if time==3
-                    times=string(allTimes(time).name);
-                else
-                    times=[times,string(allTimes(time).name)];
-                end
-            end
+        for time=1:length(allTimes)
+            count = count + 1;
+
+            times(count)=string(allTimes(time).name);
+
             file=append(pwd,'\postProcessing-',num2str(run),'\',allFolder(fold).name,'\',allTimes(time).name);
             allFiles=dir(file);
             for nfiles=3:length(allFiles)
@@ -83,11 +86,17 @@ for i=dsNum
     lastIteration=0;
     for t=nStart:nRuns
         data=readall(ds{i,t});
-        count=nInterval;
+        count=1;
+        % Pre-allocate memory? 
         while count<length(data{:,1})
-            x(k)=data{count,1}+lastIteration;
-            y1(k)=sum(data{count-(nInterval-1):count,2})/nInterval;
-            count=count+nInterval;
+            % Instantaneous mass flows
+            x(k)=data{count,1};
+            y1(k)=data{count,2};
+            % % Average mass flows
+            % x(k)=data{count,1}+lastIteration;
+            % y1(k)=sum(data{count-(nInterval-1):count,2})/nInterval;
+            % count=count+nInterval;
+            count = count+nInterval;
             k=k+1;
         end
         lastIteration=lastIteration+data{end,1};
@@ -157,11 +166,11 @@ for i=dsNum
     lastIteration=0;
     for t=nStart:nRuns
         data=readall(ds{i,t});
-        count=nInterval;
+        count=1;
         while count<length(data{:,1})
             x(k)=data{count,1}+lastIteration;
             y1(k)=data{count,col};
-            count=count+nInterval;
+            count=count+1;
             k=k+1;
         end
         lastIteration=lastIteration+data{end,1};
@@ -214,18 +223,18 @@ for i=dsNum
             semilogy(x,y1(:,5),'color',plotColor(5),'LineWidth',2);
             leg=legend(["p","Ux","Uy","h","omega"],'Location','northeast','Box','off');
         else
+            % Residuals plotted while in transient solver
             while count<length(data{:,1})
                 x(k)=data{count,1}+lastIteration;
 
-                y1(k,1)=data{count,39};
-                y1(k,2)=data{count,8};
-                y1(k,3)=data{count,11};
+                y1(k,1)=data{count,13};
+                y1(k,2)=data{count,16};
+                y1(k,3)=data{count,19};
                 y1(k,4)=data{count,3};
-                y1(k,5)=data{count,44};
-                y1(k,6)=data{count,44};
-                y1(k,7)=data{count,19};
-                y1(k,8)=data{count,22};
-                y1(k,9)=data{count,28};
+                y1(k,5)=data{count,24};
+                y1(k,6)=data{count,24};
+                y1(k,7)=data{count,27};
+                y1(k,8)=data{count,33};
                 count=count+nInterval;
                 k=k+1;
 
@@ -238,13 +247,11 @@ for i=dsNum
             semilogy(x,y1(:,3),'color',plotColor(3),'LineWidth',2);
             semilogy(x,y1(:,4),'color',plotColor(4),'LineWidth',2);
             semilogy(x,y1(:,5),'color',plotColor(5),'LineWidth',2);
-            %   semilogy(x,y1(:,6),'color',plotColor(6),'LineWidth',2);
+            semilogy(x,y1(:,6),'color',plotColor(6),'LineWidth',2);
             semilogy(x,y1(:,7),'color',plotColor(7),'LineWidth',2);
             semilogy(x,y1(:,8),'color',plotColor(8),'LineWidth',2);
-            semilogy(x,y1(:,9),'color',plotColor(8),'LineWidth',2);
-            %   Add in epsilon to plot and legend once it is in residual file
             %   leg=legend(["p","Ux","Uy", "h", "k", "epsilon","Rxx","Rxy", "Ryy"],'Location','northeast','Box','off');
-            leg=legend(["p","Ux","Uy", "h", "epsilon","Rxx","Rxy", "Ryy"],'Location','northeast','Box','off');
+            leg=legend(["Ux","Uy", "Uz","h", "epsilon","Rxx","Rxy", "Ryy"],'Location','northeast','Box','off');
         end
     end
 end
