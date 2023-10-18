@@ -28,7 +28,6 @@ License
 #include "kOmegaSSTdilationDissipation.H"
 #include "MachNo.H"
 #include "fluidThermo.H"
-#include "fieldExpression.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -38,41 +37,38 @@ namespace Foam
     {
         defineTypeNameAndDebug(MachNo, 0);
         addToRunTimeSelectionTable(functionObject, MachNo, dictionary);
-    }
-}
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-bool Foam::functionObjects::MachNo::calc()
-{
-    if (
-        foundObject<volVectorField>(fieldName_) && foundObject<fluidThermo>(fluidThermo::dictName))
-    {
-        const fluidThermo &thermo =
-            lookupObject<fluidThermo>(fluidThermo::dictName);
 
-        const volVectorField &U = lookupObject<volVectorField>(fieldName_);
+        bool MachNo::calc()
+        {
+            if (
+                foundObject<volVectorField>(fieldName_) && foundObject<fluidThermo>(fluidThermo::dictName))
+            {
+                const fluidThermo &thermo =
+                    lookupObject<fluidThermo>(fluidThermo::dictName);
 
-        return store(
-            resultName_,
-            mag(U) / sqrt(thermo.gamma() * thermo.p() / thermo.rho()));
-    }
+                const volVectorField &U = lookupObject<volVectorField>(fieldName_);
 
-    return false;
-}
+                return store(
+                    resultName_,
+                    mag(U) / sqrt(thermo.gamma() * thermo.p() / thermo.rho()));
+            }
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+            return false;
+        }
 
-Foam::functionObjects::MachNo::MachNo(
-    const word &name,
-    const Time &runTime,
-    const dictionary &dict)
-    : fieldExpression(name, runTime, dict, "U")
-{
-    setResultName("Ma", "U");
-}
+        MachNo::MachNo(
+            const word &name,
+            const Time &runTime,
+            const dictionary &dict)
+            : fieldExpression(name, runTime, dict, "U")
+        {
+            setResultName("Ma", "U");
+        }
+    } // End namespace functionObjects
 
-namespace Foam
-{
+    // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //w
 
+    // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
     namespace RASModels
     {
 

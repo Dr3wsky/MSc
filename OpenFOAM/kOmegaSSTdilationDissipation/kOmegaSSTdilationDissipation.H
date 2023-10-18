@@ -115,9 +115,6 @@ SeeAlso
 #include "RASModel.H"
 #include "eddyViscosity.H"
 #include "fluidThermo.H"
-// Mach No calc adder lib
-#include "MachNo.H"
-#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
