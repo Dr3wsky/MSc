@@ -114,83 +114,78 @@ SeeAlso
 #include "kOmegaSSTBase.H"
 #include "RASModel.H"
 #include "eddyViscosity.H"
+#include "fluidThermo.H"
+// Mach No calc adder lib
+#include "MachNo.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace RASModels
-{
 
-/*---------------------------------------------------------------------------*\
-                          Class kOmegaSST Declaration
-\*---------------------------------------------------------------------------*/
+    namespace RASModels
+    {
 
-template<class BasicTurbulenceModel>
-class kOmegaSSTdilationDissipation
-:
-    public kOmegaSSTBase<eddyViscosity<RASModel<BasicTurbulenceModel>>>
-{
-    // Private Member Functions
+        /*---------------------------------------------------------------------------*\
+                                  Class kOmegaSST Declaration
+        \*---------------------------------------------------------------------------*/
 
-        //- No copy construct
-        kOmegaSSTdilationDissipation(const kOmegaSSTdilationDissipation&) = delete;
+        template <class BasicTurbulenceModel>
+        class kOmegaSSTdilationDissipation
+            : public kOmegaSSTBase<eddyViscosity<RASModel<BasicTurbulenceModel>>>
+        {
+            // Private Member Functions
 
-        //- No copy assignment
-        void operator=(const kOmegaSSTdilationDissipation&) = delete;
+            //- No copy construct
+            kOmegaSSTdilationDissipation(const kOmegaSSTdilationDissipation &) = delete;
 
+            //- No copy assignment
+            void operator=(const kOmegaSSTdilationDissipation &) = delete;
 
-protected:
+        protected:
+            // Protected Member Functions
 
-    // Protected Member Functions
+            virtual void correctNut(const volScalarField &S2);
+            virtual void correctNut();
 
-        virtual void correctNut(const volScalarField& S2);
-        virtual void correctNut();
+        public:
+            typedef typename BasicTurbulenceModel::alphaField alphaField;
+            typedef typename BasicTurbulenceModel::rhoField rhoField;
+            typedef typename BasicTurbulenceModel::transportModel transportModel;
 
+            //- Runtime type information
+            TypeName("kOmegaSSTdilationDissipation");
 
-public:
+            // Constructors
 
-    typedef typename BasicTurbulenceModel::alphaField alphaField;
-    typedef typename BasicTurbulenceModel::rhoField rhoField;
-    typedef typename BasicTurbulenceModel::transportModel transportModel;
+            //- Construct from components
+            kOmegaSSTdilationDissipation(
+                const alphaField &alpha,
+                const rhoField &rho,
+                const volVectorField &U,
+                // const volScalarField &MachTest,
+                const surfaceScalarField &alphaRhoPhi,
+                const surfaceScalarField &phi,
+                const transportModel &transport,
+                const word &propertiesName = turbulenceModel::propertiesName,
+                const word &type = typeName);
 
+            //- Destructor
+            virtual ~kOmegaSSTdilationDissipation() = default;
 
-    //- Runtime type information
-    TypeName("kOmegaSSTdilationDissipation");
+            //- Solve the turbulence equations and correct the turbulence viscosity
+            virtual void correct();
+        };
 
+        // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    // Constructors
-
-        //- Construct from components
-        kOmegaSSTdilationDissipation
-        (
-            const alphaField& alpha,
-            const rhoField& rho,
-            const volVectorField& U,
-            const surfaceScalarField& alphaRhoPhi,
-            const surfaceScalarField& phi,
-            const transportModel& transport,
-            const word& propertiesName = turbulenceModel::propertiesName,
-            const word& type = typeName
-        );
-
-
-    //- Destructor
-    virtual ~kOmegaSSTdilationDissipation() = default;
-    
-    //- Solve the turbulence equations and correct the turbulence viscosity
-    virtual void correct();
-};
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace RASModels
+    } // End namespace RASModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 #ifdef NoRepository
-    #include "kOmegaSSTdilationDissipation.C"
+#include "kOmegaSSTdilationDissipation.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
