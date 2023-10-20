@@ -25,57 +25,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "kOmegaSSTdilationDissipation.H"
+#include "kOmegaSSTdd.H"
 #include "MachNo.H"
 #include "fluidThermo.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace functionObjects
-    {
-        defineTypeNameAndDebug(MachNo, 0);
-        addToRunTimeSelectionTable(functionObject, MachNo, dictionary);
-
-        bool MachNo::calc()
-        {
-            if (
-                foundObject<volVectorField>(fieldName_) && foundObject<fluidThermo>(fluidThermo::dictName))
-            {
-                const fluidThermo &thermo =
-                    lookupObject<fluidThermo>(fluidThermo::dictName);
-
-                const volVectorField &U = lookupObject<volVectorField>(fieldName_);
-
-                return store(
-                    resultName_,
-                    mag(U) / sqrt(thermo.gamma() * thermo.p() / thermo.rho()));
-            }
-
-            return false;
-        }
-
-        MachNo::MachNo(
-            const word &name,
-            const Time &runTime,
-            const dictionary &dict)
-            : fieldExpression(name, runTime, dict, "U")
-        {
-            setResultName("Ma", "U");
-        }
-    } // End namespace functionObjects
-
-    // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //w
-
-    // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
     namespace RASModels
     {
 
         // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdilationDissipation<BasicTurbulenceModel>::correctNut(const volScalarField &S2)
+        void kOmegaSSTdd<BasicTurbulenceModel>::correctNut(const volScalarField &S2)
         {
             // Correct the turbulence viscosity
             kOmegaSSTBase<eddyViscosity<RASModel<BasicTurbulenceModel>>>::correctNut(
@@ -86,7 +51,7 @@ namespace Foam
         }
 
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdilationDissipation<BasicTurbulenceModel>::correctNut()
+        void kOmegaSSTdd<BasicTurbulenceModel>::correctNut()
         {
             correctNut(2 * magSqr(symm(fvc::grad(this->U_))));
         }
@@ -94,7 +59,7 @@ namespace Foam
         // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
         template <class BasicTurbulenceModel>
-        kOmegaSSTdilationDissipation<BasicTurbulenceModel>::kOmegaSSTdilationDissipation(
+        kOmegaSSTdd<BasicTurbulenceModel>::kOmegaSSTdd(
             const alphaField &alpha,
             const rhoField &rho,
             const volVectorField &U,
@@ -111,7 +76,25 @@ namespace Foam
                   alphaRhoPhi,
                   phi,
                   transport,
-                  propertiesName)
+                  propertiesName),
+              MachTurb_(
+                  IOobject(
+                      "MachTurb",
+                      this->mesh().time().timeName(),
+                      this->mesh(),
+                      IOobject::NO_READ,
+                      IOobject::AUTO_WRITE),
+                  this->mesh(),
+                  dimensionedScalar(dimless, Zero)),
+              gammaThermo_(
+                  IOobject(
+                      "gammaThermo",
+                      this->mesh().time().timeName(),
+                      this->mesh(),
+                      IOobject::NO_READ,
+                      IOobject::AUTO_WRITE),
+                  this->mesh(),
+                  dimensionedScalar(dimless, Zero))
         {
             if (type == typeName)
             {
@@ -120,31 +103,41 @@ namespace Foam
         }
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+        // Used to update turbulent Mach number
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdilationDissipation<BasicTurbulenceModel>::correct()
+        void kOmegaSSTdd<BasicTurbulenceModel>::correctMachTurb()
+        {
+            const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
+            // const fluidThermo& thermo = Foam::functionObjects::MachNo::lookupObject<fluidThermo>(fluidThermo::dictName);
+            // const fluidThermo& thermo =  Foam::functionObjects::MachNo::lookupObject<fluidThermo>(fluidThermo::dictName);
+            gammaThermo_ = thermo.gamma();
+            MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);
+        }
+
+        // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+        template <class BasicTurbulenceModel>
+        void kOmegaSSTdd<BasicTurbulenceModel>::correct()
         {
             if (!this->turbulence_)
             {
                 return;
             }
 
+            // Output statement to show turbulence model being used
+            Info << "-----------------------------------------------------------------------------" << endl;
+            Info << "This is a modified version of kOmegaSST to account for dilatation dissipation" << endl;
+            Info << "-----------------------------------------------------------------------------" << endl;
+
             // Local references
             const alphaField &alpha = this->alpha_;
             const rhoField &rho = this->rho_;
             const surfaceScalarField &alphaRhoPhi = this->alphaRhoPhi_;
             const volVectorField &U = this->U_;
-            // volScalarField &MachTest = this->MachTest_;
-            volScalarField &omega = this->omega_;
-            volScalarField &k = this->k_;
             volScalarField &nut = this->nut_;
+            fv::options &fvOptions(fv::options::New(this->mesh_));
 
-            fv::options &
-                fvOptions(fv::options::New(this->mesh_));
-
-            // Output statements to confirm use
-            Info << "----------------------------------------------" << endl;
-            Info << "RUNNING kOmegaSSTdilationDissipation" << endl;
-            Info << "----------------------------------------------" << endl;
+            // Updating turbulent Mach No
+            correctMachTurb();
 
             BasicTurbulenceModel::correct();
 
@@ -158,10 +151,10 @@ namespace Foam
             volScalarField::Internal G(this->GName(), nut * GbyNu0);
 
             // Update omega and G at the wall
-            omega.boundaryFieldRef().updateCoeffs();
+            this->omega_.boundaryFieldRef().updateCoeffs();
 
             volScalarField CDkOmega(
-                (2 * this->alphaOmega2_) * (fvc::grad(k) & fvc::grad(omega)) / omega);
+                (2 * this->alphaOmega2_) * (fvc::grad(this->k_) & fvc::grad(this->omega_)) / this->omega_);
 
             volScalarField F1(this->F1(CDkOmega));
             volScalarField F23(this->F23());
@@ -174,29 +167,29 @@ namespace Foam
 
                 // Turbulent frequency equation
                 tmp<fvScalarMatrix> omegaEqn(
-                    fvm::ddt(alpha, rho, omega) + fvm::div(alphaRhoPhi, omega) - fvm::laplacian(alpha * rho * this->DomegaEff(F1), omega) ==
-                    alpha() * rho() * gamma * GbyNu0 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * gamma * divU, omega) - fvm::Sp(alpha() * rho() * beta * omega(), omega) - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / omega(), omega) + alpha() * rho() * beta * sqr(this->omegaInf_) + this->Qsas(S2(), gamma, beta) + this->omegaSource() + fvOptions(alpha, rho, omega));
+                    fvm::ddt(alpha, rho, this->omega_) + fvm::div(alphaRhoPhi, this->omega_) - fvm::laplacian(alpha * rho * this->DomegaEff(F1), this->omega_) ==
+                    alpha() * rho() * gamma * GbyNu0 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * gamma * divU, this->omega_) - fvm::Sp(alpha() * rho() * beta * this->omega_(), this->omega_) - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / this->omega_(), this->omega_) + alpha() * rho() * beta * sqr(this->omegaInf_) + this->Qsas(S2(), gamma, beta) + this->omegaSource() + fvOptions(alpha, rho, this->omega_));
 
                 omegaEqn.ref().relax();
                 fvOptions.constrain(omegaEqn.ref());
-                omegaEqn.ref().boundaryManipulate(omega.boundaryFieldRef());
+                omegaEqn.ref().boundaryManipulate(this->omega_.boundaryFieldRef());
                 solve(omegaEqn);
-                fvOptions.correct(omega);
-                bound(omega, this->omegaMin_);
+                fvOptions.correct(this->omega_);
+                bound(this->omega_, this->omegaMin_);
             }
 
             // Turbulent kinetic energy equation
             tmp<fvScalarMatrix> kEqn(
-                fvm::ddt(alpha, rho, k) + fvm::div(alphaRhoPhi, k) - fvm::laplacian(alpha * rho * this->DkEff(F1), k) ==
-                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, k) - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), k) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + fvOptions(alpha, rho, k));
+                fvm::ddt(alpha, rho, this->k_) + fvm::div(alphaRhoPhi, this->k_) - fvm::laplacian(alpha * rho * this->DkEff(F1), this->k_) ==
+                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + fvOptions(alpha, rho, this->k_));
 
             tgradU.clear();
 
             kEqn.ref().relax();
             fvOptions.constrain(kEqn.ref());
             solve(kEqn);
-            fvOptions.correct(k);
-            bound(k, this->kMin_);
+            fvOptions.correct(this->k_);
+            bound(this->k_, this->kMin_);
 
             correctNut(S2);
         }

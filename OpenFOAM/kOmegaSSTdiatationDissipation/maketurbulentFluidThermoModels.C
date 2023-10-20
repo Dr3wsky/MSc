@@ -33,7 +33,7 @@ License
 // Compressibility Correction  models
 // -------------------------------------------------------------------------- //
 
-#include "kOmegaSSTdilationDissipation.H"
-makeRASModel(kOmegaSSTdilationDissipation);
+#include "kOmegaSSTdd.H"
+makeRASModel(kOmegaSSTdd);
 
 // ************************************************************************* //

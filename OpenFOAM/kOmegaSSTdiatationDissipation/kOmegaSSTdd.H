@@ -108,19 +108,20 @@ SeeAlso
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kOmegaSSTdilationDissipation_H
-#define kOmegaSSTdilationDissipation_H
+#ifndef kOmegaSSTdd_H
+#define kOmegaSSTdd_H
 
 #include "kOmegaSSTBase.H"
 #include "RASModel.H"
 #include "eddyViscosity.H"
-#include "fluidThermo.H"
+#include "fvCFD.H"
+#include "psiThermo.H"
+#include "turbulentFluidThermoModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
     namespace RASModels
     {
 
@@ -129,16 +130,20 @@ namespace Foam
         \*---------------------------------------------------------------------------*/
 
         template <class BasicTurbulenceModel>
-        class kOmegaSSTdilationDissipation
+        class kOmegaSSTdd
             : public kOmegaSSTBase<eddyViscosity<RASModel<BasicTurbulenceModel>>>
         {
+            // Turbulent Mach No, used for turbulence model modification
+            volScalarField MachTurb_;
+            // Gamma (specific heat ratio), output for verification/testing
+            volScalarField gammaThermo_;
             // Private Member Functions
 
             //- No copy construct
-            kOmegaSSTdilationDissipation(const kOmegaSSTdilationDissipation &) = delete;
+            kOmegaSSTdd(const kOmegaSSTdd &) = delete;
 
             //- No copy assignment
-            void operator=(const kOmegaSSTdilationDissipation &) = delete;
+            void operator=(const kOmegaSSTdd &) = delete;
 
         protected:
             // Protected Member Functions
@@ -152,16 +157,15 @@ namespace Foam
             typedef typename BasicTurbulenceModel::transportModel transportModel;
 
             //- Runtime type information
-            TypeName("kOmegaSSTdilationDissipation");
+            TypeName("kOmegaSSTdd");
 
             // Constructors
 
             //- Construct from components
-            kOmegaSSTdilationDissipation(
+            kOmegaSSTdd(
                 const alphaField &alpha,
                 const rhoField &rho,
                 const volVectorField &U,
-                // const volScalarField &MachTest,
                 const surfaceScalarField &alphaRhoPhi,
                 const surfaceScalarField &phi,
                 const transportModel &transport,
@@ -169,10 +173,12 @@ namespace Foam
                 const word &type = typeName);
 
             //- Destructor
-            virtual ~kOmegaSSTdilationDissipation() = default;
+            virtual ~kOmegaSSTdd() = default;
 
             //- Solve the turbulence equations and correct the turbulence viscosity
             virtual void correct();
+            // Update turbulent Mach No.
+            virtual void correctMachTurb();
         };
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -182,7 +188,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 #ifdef NoRepository
-#include "kOmegaSSTdilationDissipation.C"
+#include "kOmegaSSTdd.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

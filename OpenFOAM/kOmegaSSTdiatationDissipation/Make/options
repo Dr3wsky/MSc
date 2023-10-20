@@ -12,11 +12,11 @@ EXE_INC = \
 
 LIB_LIBS = \
     -lcompressibleTransportModels \
+    -lcompressibleTurbulenceModels \
     -lfluidThermophysicalModels \
     -lsolidThermo \
     -lsolidSpecie \
     -lturbulenceModels \
     -lspecie \
     -lfiniteVolume \
-    -lmeshTools \
-    # -lfield
+    -lmeshTools
