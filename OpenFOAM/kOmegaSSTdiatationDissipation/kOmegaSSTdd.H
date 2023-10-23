@@ -114,9 +114,9 @@ SeeAlso
 #include "kOmegaSSTBase.H"
 #include "RASModel.H"
 #include "eddyViscosity.H"
-#include "fvCFD.H"
-#include "psiThermo.H"
-#include "turbulentFluidThermoModel.H"
+#include "fvCFD.H"                     //
+#include "psiThermo.H"                 //
+#include "turbulentFluidThermoModel.H" //
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
