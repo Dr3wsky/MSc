@@ -86,6 +86,15 @@ namespace Foam
                       IOobject::AUTO_WRITE),
                   this->mesh(),
                   dimensionedScalar(dimless, Zero)),
+              //   MachTurbSq_(
+              //       IOobject(
+              //           "MachTurb",
+              //           this->mesh().time().timeName(),
+              //           this->mesh(),
+              //           IOobject::NO_READ,
+              //           IOobject::NO_WRITE),
+              //       this->mesh(),
+              //       dimensionedScalar(dimless, Zero)),
               gammaThermo_(
                   IOobject(
                       "gammaThermo",
@@ -108,8 +117,6 @@ namespace Foam
         void kOmegaSSTdd<BasicTurbulenceModel>::correctMachTurb()
         {
             const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
-            // const fluidThermo& thermo = Foam::functionObjects::MachNo::lookupObject<fluidThermo>(fluidThermo::dictName);
-            // const fluidThermo& thermo =  Foam::functionObjects::MachNo::lookupObject<fluidThermo>(fluidThermo::dictName);
             gammaThermo_ = thermo.gamma();
             MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);
         }
@@ -136,7 +143,7 @@ namespace Foam
             volScalarField &nut = this->nut_;
             fv::options &fvOptions(fv::options::New(this->mesh_));
 
-            // Updating turbulent Mach No
+            // Calculate turbulennt Mach number
             correctMachTurb();
 
             BasicTurbulenceModel::correct();
@@ -181,7 +188,7 @@ namespace Foam
             // Turbulent kinetic energy equation
             tmp<fvScalarMatrix> kEqn(
                 fvm::ddt(alpha, rho, this->k_) + fvm::div(alphaRhoPhi, this->k_) - fvm::laplacian(alpha * rho * this->DkEff(F1), this->k_) ==
-                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + fvOptions(alpha, rho, this->k_));
+                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * (scalar(1) + pow(MachTurb_(), 2)) * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + fvOptions(alpha, rho, this->k_));
 
             tgradU.clear();
 
