@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import pandas as pd
 import data_handling
@@ -8,7 +9,8 @@ n_runs = 10
 
 axes_font_size = 15
 
-# Data Read
+# Data Location
+# ----------------------------------------------------------------------------
 loc = os.getcwd()
 folds = os.listdir(f'{loc}/postProcessing-{n_runs}/')
 all_times = os.listdir(f'{loc}/postProcessing-{n_runs}/{folds[0]}')
@@ -19,81 +21,71 @@ if len(all_times) == 1:
 else:
     mode = 'trans'
 
-
-all_files = []
-
 dir_home = os.getcwd()
 run_dir = dir_home + '\\' + f'postProcessing-{n_runs}'
-# Walk through directory
-datastore = {
-        folds[0]: data_handling.extract(run_dir + '\\' + folds[0], folds[0]),
-        folds[1]: data_handling.extract(run_dir + '\\' + folds[1], folds[1])
+
+
+# Domain Mass Flow Convergence    
+# ----------------------------------------------------------------------------        
+
+# Convert data to df                           
+ds_num = [0, 1, 8, 3]
+datastore = {}
+for idx in ds_num:
+    datastore[folds[idx]] = data_handling.extract(run_dir + '\\' + folds[idx], folds[idx])
+mf = pd.DataFrame(datastore)
+
+# Sum mass flow through domain boundaries      
+mf_tot = mf.farfieldATMFlow.iloc[mf.shape[0]-n_interval:].mean() \
+        + mf.inletFlow.iloc[mf.shape[0]-n_interval:].mean() \
+        + mf.jetInletFlow.iloc[mf.shape[0]-n_interval:].mean() \
+        + mf.outletFlow.iloc[mf.shape[0]-n_interval:].mean()
         
-} 
-df = pd.DataFrame(datastore)
+mf_out = mf.outletFlow.iloc[mf.shape[0]-n_interval:].mean()
+mf_convergence = abs(mf_tot / mf_out)
 
-starter = 1
+if mf_convergence <= 0.005:
+    print(f"Domain mass flow continuity converged. MF_err = {mf_convergence:.6f} < 0.005")
+    print('----------------------------------------------------------------------')
+else:
+    print(f"Mass Flow continuity error = {mf_convergence:.6f}")
+    print("Continue running simulation until convergence")
+    sys.exit()
 
-                        
-                            
-                    
-                    
-                    
-                    
-            #     numHead = 0
-            #     while header == "true":
-            #         cur_line = fileID.readline()
-            #         if "#" in cur_line:
-            #             numHead += 1
-            #         else:
-            #             header = "false"
+# Delete dataframe for rewtriting in next block
+for num in ds_num:
+    datastore.pop(folds[num])
+    
+    
+# # Residual COnvergence    
+# ----------------------------------------------------------------------------        
 
-            # ds = pd.read_csv(fileread, skiprows=numHead, delim_whitespace=True)
-            # datastores.append(ds)
-# 1) Mass Flow Convergence
-# ds_num = [2, 3, 5, 7]
-# mf_tot = 0
-# mf_out = 0
+# Convert data to df                           
+ds_num = 9
+# Assign Column names
+residuals = ['p', 'Ux', 'Uy', 'Uz', 'h', 'k', 'omega']
+datastore = {}
+for name in residuals:
+    datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name)
 
-# for i in ds_num:
-#     data = datastores[i]
-#     mf_tot += data.iloc[-1, 1]
-#     exec(f'mf_{folds[i]} = data.iloc[-1, 1]')
-#     if folds[i] == 'outletFlow':
-#         mf_out += data.iloc[-1, 1]
+rf = pd.DataFrame(datastore)
 
-# mf_conv = abs(mf_tot / mf_out)
+# Average last iters for each residual, and check
+for column in rf.columns:
+    rf_mean = rf.iloc[rf.shape[0]-n_interval:][column].mean()
+    if rf_mean <= 1e-5:
+        print(f'{column} residuals converged < 1e-5')
+        continue
+    else: 
+        print(f"{column} > 1e-5, residuals not converged")
+        print("Continue running simulation until convergence with lower residuals")
+        sys.exit()
 
-# if mf_conv <= 0.005:
-#     print(f"Mass Flow error converged. {mf_conv:.6f} < 0.005")
-# else:
-#     print(f"Mass Flow error = {mf_conv:.6f}")
-#     print("Continue running simulation until convergence")
-
-# # 2) Residuals Limit Check
-# ds_num = [8]
-
-# for i in ds_num:
-#     data = datastores[i]
-#     p = data.iloc[-1, 28]
-#     Ux = data.iloc[-1, 12]
-#     Uy = data.iloc[-1, 15]
-#     Uz = data.iloc[-1, 18]
-#     h = data.iloc[-1, 2]
-#     k = data.iloc[-1, 23]
-#     omega = data.iloc[-1, 33]
-
-# residuals = pd.DataFrame(
-#     {'p': p, 'Ux': Ux, 'Uy': Uy, 'Uz': Uz, 'h': h, 'k': k, 'omega': omega})
-
-# for column in residuals.columns:
-#     if residuals.iloc[-1][column] <= 1e-5:
-#         continue
-#     else:
-#         print(f"{column} > 1e-5, residuals not converged")
-#         print("Continue running simulation until convergence with lower residuals")
-
-# print("All residuals converged < 1e-5")
+print("ALL RESIDUALS CONVERGED < 1e-5")    
+print('----------------------------------------------------------------------')
+        
+# Solution Monitor Convergence    
+# ----------------------------------------------------------------------------
 
 # # 3) Solution Monitor Convergence
 # monit_count = 0
