@@ -20,12 +20,19 @@ else:
     mode = 'trans'
 
 
-datastore = []
 all_files = []
 
+dir_home = os.getcwd()
+run_dir = dir_home + '\\' + f'postProcessing-{n_runs}'
+# Walk through directory
+datastore = {
+        folds[0]: data_handling.extract(run_dir + '\\' + folds[0], folds[0]),
+        folds[1]: data_handling.extract(run_dir + '\\' + folds[1], folds[1])
+        
+} 
+df = pd.DataFrame(datastore)
 
-# Walk through directory 
-data_handling.extract(loc + '\\' + folds[0])
+starter = 1
 
                         
                             
