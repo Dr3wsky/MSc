@@ -16,7 +16,33 @@ def extract(dir_loc, name):
                         break
             headers = data[header_line].split()
             # Split data depending on underlying type, or folder name
-            raw_data = [float(row.split()[1]) for row in data[start:]]
+            # For mass flow patches
+            if file == 'surfaceFieldValue.dat' and name[-4:] == 'Flow':
+                raw_data = [float(row.split()[1]) for row in data[start:]]
+                
+            # For residuals file
+            elif file == 'solverInfo.dat':
+                idx = 0
+                for col in headers:
+                    if col == f'{name}_initial':
+                        raw_data = [float(row.split()[idx]) for row in data[start:]]
+                    idx += 1
+                    
+            # For other solution monitors
+            elif file == 'volFieldValue.dat':
+                idx = 0
+                for col in headers:
+                    if col == f'max({name})' or col == f'min({name})':
+                        raw_data = [float(row.split()[idx-1]) for row in data[start:]]
+                    idx += 1   
+                    
+            elif file == 'surfaceFieldValue.dat' and name == 'U':
+                idx = 0
+                for col in headers:
+                    if col == f'weightedAreaAverage({name})':
+                        raw_data = [float(row.split()[idx-1][1:]) for row in data[start:]]
+                    idx += 1 
+                    
             full_file.close()
 
             return raw_data

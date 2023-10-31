@@ -1,6 +1,5 @@
 import os
 import sys
-import numpy as np
 import pandas as pd
 import data_handling
 
@@ -23,33 +22,34 @@ else:
 
 dir_home = os.getcwd()
 run_dir = dir_home + '\\' + f'postProcessing-{n_runs}'
-
-
-# Domain Mass Flow Convergence    
-# ----------------------------------------------------------------------------        
-
-# Convert data to df                           
-ds_num = [0, 1, 8, 3]
 datastore = {}
+
+
+# 1) Domain Mass Flow Convergence    
+# ----------------------------------------------------------------------------        
+                           
+ds_num = [0, 1, 8, 3]
+patch = ['farFieldATMFlow', 'inletFlow', 'jetInletFlow', 'outletFlow']
+# Extract data and convert dict to DataFrame
 for idx in ds_num:
     datastore[folds[idx]] = data_handling.extract(run_dir + '\\' + folds[idx], folds[idx])
-mf = pd.DataFrame(datastore)
+mass_frame = pd.DataFrame(datastore)
 
-# Sum mass flow through domain boundaries      
-mf_tot = mf.farfieldATMFlow.iloc[mf.shape[0]-n_interval:].mean() \
-        + mf.inletFlow.iloc[mf.shape[0]-n_interval:].mean() \
-        + mf.jetInletFlow.iloc[mf.shape[0]-n_interval:].mean() \
-        + mf.outletFlow.iloc[mf.shape[0]-n_interval:].mean()
+# Sum mass flow through domain boundaries 
+mf_tot = 0
+for column in mass_frame.columns:
+    mf_tot += mass_frame.iloc[mass_frame.shape[0]-n_interval:][column].mean()
+    if column == 'outletFlow':
+        mf_out = mass_frame.iloc[mass_frame.shape[0]-n_interval:][column].mean()
         
-mf_out = mf.outletFlow.iloc[mf.shape[0]-n_interval:].mean()
 mf_convergence = abs(mf_tot / mf_out)
 
 if mf_convergence <= 0.005:
-    print(f"Domain mass flow continuity converged. MF_err = {mf_convergence:.6f} < 0.005")
+    print(f'Domain mass flow continuity converged. MF_err = {mf_convergence:.6f} < 0.005')
     print('----------------------------------------------------------------------')
 else:
-    print(f"Mass Flow continuity error = {mf_convergence:.6f}")
-    print("Continue running simulation until convergence")
+    print(f'Mass Flow continuity error = {mf_convergence:.6f}')
+    print('Continue running simulation until convergence')
     sys.exit()
 
 # Delete dataframe for rewtriting in next block
@@ -57,137 +57,74 @@ for num in ds_num:
     datastore.pop(folds[num])
     
     
-# # Residual COnvergence    
+# # 2) Residual Convergence    
 # ----------------------------------------------------------------------------        
 
 # Convert data to df                           
 ds_num = 9
 # Assign Column names
 residuals = ['p', 'Ux', 'Uy', 'Uz', 'h', 'k', 'omega']
-datastore = {}
+# Extract data and convert dict to DataFrame
 for name in residuals:
     datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name)
-
-rf = pd.DataFrame(datastore)
+resid_frame = pd.DataFrame(datastore)
 
 # Average last iters for each residual, and check
-for column in rf.columns:
-    rf_mean = rf.iloc[rf.shape[0]-n_interval:][column].mean()
-    if rf_mean <= 1e-5:
+for column in resid_frame.columns:
+    resid_mean = resid_frame.iloc[resid_frame.shape[0]-n_interval:][column].mean()
+    if resid_mean <= 1e-5:
         print(f'{column} residuals converged < 1e-5')
         continue
     else: 
-        print(f"{column} > 1e-5, residuals not converged")
-        print("Continue running simulation until convergence with lower residuals")
+        print(f'{column} > 1e-5, residuals not converged')
+        print('Continue running simulation until convergence with lower residuals')
         sys.exit()
 
-print("ALL RESIDUALS CONVERGED < 1e-5")    
+print('ALL RESIDUALS CONVERGED < 1e-5')    
 print('----------------------------------------------------------------------')
+
+# Delete dataframe for rewtriting in next block
+for name in residuals:
+    datastore.pop(name)
+
         
-# Solution Monitor Convergence    
+# 3) Solution Monitor Convergence    
 # ----------------------------------------------------------------------------
 
-# # 3) Solution Monitor Convergence
-# monit_count = 0
-# monitors = ["T_max", "Rho_min", "Ujet", "MF_jet", 'Entrainment']
-# ds_num = [0, 1, 6, 6, 9]
-# conv_lim = 0.0005
+monitors = ['T_max', 'rho_min', 'U_jet', 'MF_jet', 'entrainment']
+conv_lim = 0.0005
 
-# for i in ds_num:
-#     monit_count += 1
-#     data = datastores[i]
+# Extract data and convert to dataframe
+for name in monitors:
+    if name == 'T_max':
+        ds_num = 6
+        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name[0])
+    elif name == 'rho_min':
+        ds_num = 7
+        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name[0:3])
+    elif name =='U_jet':
+        ds_num = 5
+        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name[0])
+    elif name == 'MF_jet':
+        ds_num = 4
+        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], folds[ds_num])
+    elif name == 'entrainment':
+        ds_num = 10
+        tubeInletFlow = data_handling.extract(run_dir + '\\' + folds[ds_num], folds[ds_num])
+        datastore[name] = [a / b for a, b in zip(tubeInletFlow, datastore['MF_jet'])]
+      
+monit_frame = pd.DataFrame(datastore)
 
-#     if folds[i] == 'Max':
-#         lastIters = data.iloc[-n_interval:, 1]
-#         prevIters = data.iloc[-(2 * n_interval):-n_interval, 1]
-#         mean_maxT = np.mean(lastIters)
+# Test convergence in solution monitors 
+for column in monit_frame.columns:
+    monit_mean = monit_frame.iloc[monit_frame.shape[0]-n_interval:][column].mean()
+    monit_prev_mean =  monit_frame.iloc[monit_frame.shape[0]-2*n_interval:monit_frame.shape[0]-n_interval][column].mean()
+    conv = abs(monit_mean - monit_prev_mean) / abs(monit_mean)
+    if conv <= conv_lim:
+        print(f'{column} residuals converged: {conv:1.4e} < {conv_lim:.1e}')
+        continue
+    else: 
+        print(f'{column} > {conv_lim:.1e}, residuals not converged')
+        print('Continue running simulation until convergence with lower residuals')
+        sys.exit()
 
-#     elif folds[i] == 'Min':
-#         lastIters = data.iloc[-n_interval:, 2]
-#         prevIters = data.iloc[-(2 * n_interval):-n_interval, 2]
-#         mean_minRho = np.mean(lastIters)
-
-#     elif folds[i] == 'jetOutlet_intB' and monitors[monit_count] == 'Ujet':
-#         lastIters = (data.iloc[-n_interval:, 4].str.replace("(",
-#                      "").str.replace(")", "", regex=False).astype(float)) ** 2
-#         prevIters = (
-#             data.iloc[-(2 * n_interval):-n_interval, 4]
-#             .str.replace("(", "")
-#             .str.replace(")", "", regex=False)
-#             .astype(float)
-#         ) ** 2
-#         mean_Ujet = np.mean(lastIters)
-
-#     elif folds[i] == 'jetOutlet_intB' and monitors[monit_count] == 'MF_jet':
-#         lastIters = (
-#             data.iloc[-n_interval:, 3]
-#             * np.pi
-#             * (0.0032 ** 2)
-#             * np.sqrt(
-#                 (data.iloc[-n_interval:, 4].str.replace("(",
-#                  "").str.replace(")", "", regex=False).astype(float)) ** 2
-#                 + (data.iloc[-n_interval:, 6]) ** 2
-#                 + (data.iloc[-n_interval:, 7].str.replace("(",
-#                    "").str.replace(")", "", regex=False).astype(float)) ** 2
-#             )
-#         )
-#         prevIters = (
-#             data.iloc[-(2 * n_interval):-n_interval, 3]
-#             * np.pi
-#             * (0.0032 ** 2)
-#             * np.sqrt(
-#                 (data.iloc[-(2 * n_interval):-n_interval, 4].str.replace("(",
-#                  "").str.replace(")", "", regex=False).astype(float))
-#                 ** 2
-#                 + (data.iloc[-(2 * n_interval):-n_interval, 6]) ** 2
-#                 + (data.iloc[-(2 * n_interval):-n_interval, 7].str.replace("(",
-#                    "").str.replace(")", "", regex=False).astype(float))
-#                 ** 2
-#             )
-#         )
-#         mean_MFjet = np.mean(lastIters)
-#         prev_mean_MFjet = np.mean(prevIters)
-
-#     elif folds[i] == 'tubeInlet_intB' and monitors[monit_count] == 'Entrainment':
-#         lastIters = (
-#             data.iloc[-n_interval:, 3]
-#             * np.pi
-#             * ((0.025396 ** 2) - (0.0032 ** 2))
-#             * np.sqrt(
-#                 (data.iloc[-n_interval:, 4].str.replace("(",
-#                  "").str.replace(")", "", regex=False).astype(float)) ** 2
-#                 + (data.iloc[-n_interval:, 6]) ** 2
-#                 + (data.iloc[-n_interval:, 7].str.replace("(",
-#                    "").str.replace(")", "", regex=False).astype(float)) ** 2
-#             )
-#         )
-#         prevIters = (
-#             data.iloc[-(2 * n_interval):-n_interval, 3]
-#             * np.pi
-#             * ((0.025396 ** 2) - (0.0032 ** 2))
-#             * np.sqrt(
-#                 (data.iloc[-(2 * n_interval):-n_interval, 4].str.replace("(",
-#                  "").str.replace(")", "", regex=False).astype(float))
-#                 ** 2
-#                 + (data.iloc[-(2 * n_interval):-n_interval, 6]) ** 2
-#                 + (data.iloc[-(2 * n_interval):-n_interval, 7].str.replace("(",
-#                    "").str.replace(")", "", regex=False).astype(float))
-#                 ** 2
-#             )
-#         )
-#         last_entrain = np.mean(lastIters) / mean_MFjet
-#         prev_entrain = np.mean(prevIters) / prev_mean_MFjet
-
-#     if monitors[monit_count] == 'Entrainment':
-#         convergence = abs(last_entrain - prev_entrain) / last_entrain
-#     else:
-#         meanVal = np.mean(lastIters)
-#         meanPrev = np.mean(prevIters)
-#         convergence = abs(meanVal - meanPrev) / meanVal
-
-#     if convergence < conv_lim:
-#         print(
-#             f"{monitors[monit_count]} Converged. Monitor variance = {convergence:.6f} over last 1k iterations")
-#     else:
-#         print(
-#             f"{monitors[monit_count]} NOT converged. Continue simulation until monitor < 0.0005 variance")
