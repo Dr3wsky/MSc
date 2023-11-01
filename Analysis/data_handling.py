@@ -15,7 +15,10 @@ def extract(dir_loc, name):
                         start = line
                         break
             headers = data[header_line].split()
-            # Split data depending on underlying type, or folder name
+
+# Data extraction for convergence_check.py
+# Takes specific data column(s) as raw data bassed on the underlying file structure
+# ----------------------------------------------------------------------------
             # For mass flow patches
             if file == 'surfaceFieldValue.dat' and name[-4:] == 'Flow':
                 raw_data = [float(row.split()[1]) for row in data[start:]]

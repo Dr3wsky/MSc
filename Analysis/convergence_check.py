@@ -4,7 +4,7 @@ import pandas as pd
 import data_handling
 
 n_interval = 1000
-n_runs = 10
+n_runs = 11
 
 axes_font_size = 15
 
