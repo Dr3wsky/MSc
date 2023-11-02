@@ -32,7 +32,7 @@ ds_num = [0, 1, 8, 3]
 patch = ['farFieldATMFlow', 'inletFlow', 'jetInletFlow', 'outletFlow']
 # Extract data and convert dict to DataFrame
 for idx in ds_num:
-    datastore[folds[idx]] = data_handling.extract(run_dir + '\\' + folds[idx], folds[idx])
+    datastore[folds[idx]] = data_handling.extract_postproc(run_dir + '\\' + folds[idx], folds[idx])
 mass_frame = pd.DataFrame(datastore)
 
 # Sum mass flow through domain boundaries 
@@ -64,9 +64,9 @@ for num in ds_num:
 ds_num = 9
 # Assign Column names
 residuals = ['p', 'Ux', 'Uy', 'Uz', 'h', 'k', 'omega']
-# Extract data and convert dict to DataFrame
+# extract.post_proc data and convert dict to DataFrame
 for name in residuals:
-    datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name)
+    datastore[name] = data_handling.extract_postproc(run_dir + '\\' + folds[ds_num], name)
 resid_frame = pd.DataFrame(datastore)
 
 # Average last iters for each residual, and check
@@ -94,23 +94,23 @@ for name in residuals:
 monitors = ['T_max', 'rho_min', 'U_jet', 'MF_jet', 'entrainment']
 conv_lim = 0.0005
 
-# Extract data and convert to dataframe
+# extract.post_proc data and convert to dataframe
 for name in monitors:
     if name == 'T_max':
         ds_num = 6
-        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name[0])
+        datastore[name] = data_handling.extract_postproc(run_dir + '\\' + folds[ds_num], name[0])
     elif name == 'rho_min':
         ds_num = 7
-        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name[0:3])
+        datastore[name] = data_handling.extract_postproc(run_dir + '\\' + folds[ds_num], name[0:3])
     elif name =='U_jet':
         ds_num = 5
-        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], name[0])
+        datastore[name] = data_handling.extract_postproc(run_dir + '\\' + folds[ds_num], name[0])
     elif name == 'MF_jet':
         ds_num = 4
-        datastore[name] = data_handling.extract(run_dir + '\\' + folds[ds_num], folds[ds_num])
+        datastore[name] = data_handling.extract_postproc(run_dir + '\\' + folds[ds_num], folds[ds_num])
     elif name == 'entrainment':
         ds_num = 10
-        tubeInletFlow = data_handling.extract(run_dir + '\\' + folds[ds_num], folds[ds_num])
+        tubeInletFlow = data_handling.extract_postproc(run_dir + '\\' + folds[ds_num], folds[ds_num])
         datastore[name] = [a / b for a, b in zip(tubeInletFlow, datastore['MF_jet'])]
       
 monit_frame = pd.DataFrame(datastore)
