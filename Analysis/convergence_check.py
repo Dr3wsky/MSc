@@ -73,10 +73,10 @@ resid_frame = pd.DataFrame(datastore)
 for column in resid_frame.columns:
     resid_mean = resid_frame.iloc[resid_frame.shape[0]-n_interval:][column].mean()
     if resid_mean <= 1e-5:
-        print(f'{column} residuals converged < 1e-5')
+        print(f'{column} residuals converged: {resid_mean:1.4e} < 1e-5')
         continue
     else: 
-        print(f'{column} > 1e-5, residuals not converged')
+        print(f'{column} > 1e-5, residuals NOT converged: {resid_mean:1.4e}')
         print('Continue running simulation until convergence with lower residuals')
         sys.exit()
 
@@ -124,7 +124,7 @@ for column in monit_frame.columns:
         print(f'{column} residuals converged: {conv:1.4e} < {conv_lim:.1e}')
         continue
     else: 
-        print(f'{column} > {conv_lim:.1e}, residuals not converged')
+        print(f'{column} > {conv_lim:.1e}, residuals NOT converged')
         print('Continue running simulation until convergence with lower residuals')
         sys.exit()
 

@@ -28,7 +28,7 @@ def extract(dir_loc, name):
                 idx = 0
                 for col in headers:
                     if col == f'{name}_initial':
-                        raw_data = [float(row.split()[idx]) for row in data[start:]]
+                        raw_data = [float(row.split()[idx-1]) for row in data[start:]]
                     idx += 1
                     
             # For other solution monitors
