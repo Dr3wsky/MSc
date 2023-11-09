@@ -4,15 +4,19 @@ import pandas as pd
 import data_handling
 
 n_interval = 1000
-n_runs = 11
+n_runs = 10
 
 axes_font_size = 15
 
 # Data Location
 # ----------------------------------------------------------------------------
-loc = os.getcwd()
-folds = os.listdir(f'{loc}/postProcessing-{n_runs}/')
-all_times = os.listdir(f'{loc}/postProcessing-{n_runs}/{folds[0]}')
+# dir_home = os.getcwd()
+dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
+# Enter simulation folder here
+sim = 'PIV_JetSim_M4'
+run_dir = dir_home + sim + '\\' + f'postProcessing-{n_runs}'
+folds = os.listdir(f'{run_dir}')
+all_times = os.listdir(f'{run_dir}/{folds[0]}')
 
 # Check which simulation type
 if len(all_times) == 1:
@@ -20,8 +24,7 @@ if len(all_times) == 1:
 else:
     mode = 'trans'
 
-dir_home = os.getcwd()
-run_dir = dir_home + '\\' + f'postProcessing-{n_runs}'
+
 datastore = {}
 
 
@@ -64,7 +67,7 @@ for num in ds_num:
 ds_num = 9
 # Assign Column names
 residuals = ['p', 'Ux', 'Uy', 'Uz', 'h', 'k', 'omega']
-# extract.post_proc data and convert dict to DataFrame
+# Extract data and convert dict to DataFrame
 for name in residuals:
     datastore[name] = data_handling.extract_postproc(run_dir + '\\' + folds[ds_num], name)
 resid_frame = pd.DataFrame(datastore)
@@ -73,10 +76,10 @@ resid_frame = pd.DataFrame(datastore)
 for column in resid_frame.columns:
     resid_mean = resid_frame.iloc[resid_frame.shape[0]-n_interval:][column].mean()
     if resid_mean <= 1e-5:
-        print(f'{column} residuals converged: {resid_mean:1.4e} < 1e-5')
+        print(f'{column} residuals converged < 1e-5')
         continue
     else: 
-        print(f'{column} > 1e-5, residuals NOT converged: {resid_mean:1.4e}')
+        print(f'{column} > 1e-5, residuals not converged')
         print('Continue running simulation until convergence with lower residuals')
         sys.exit()
 
@@ -94,7 +97,7 @@ for name in residuals:
 monitors = ['T_max', 'rho_min', 'U_jet', 'MF_jet', 'entrainment']
 conv_lim = 0.0005
 
-# extract.post_proc data and convert to dataframe
+# Extract data and convert to dataframe
 for name in monitors:
     if name == 'T_max':
         ds_num = 6
@@ -124,7 +127,7 @@ for column in monit_frame.columns:
         print(f'{column} residuals converged: {conv:1.4e} < {conv_lim:.1e}')
         continue
     else: 
-        print(f'{column} > {conv_lim:.1e}, residuals NOT converged')
+        print(f'{column} > {conv_lim:.1e}, residuals not converged')
         print('Continue running simulation until convergence with lower residuals')
         sys.exit()
 
