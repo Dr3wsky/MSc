@@ -48,7 +48,7 @@ for column in mass_frame.columns:
 mf_convergence = abs(mf_tot / mf_out)
 
 if mf_convergence <= 0.005:
-    print(f'Domain mass flow continuity converged. MF_err = {mf_convergence:.6f} < 0.005')
+    print(f'Domain mass flow continuity converged: MF_err = {mf_convergence:.6f} < 0.005')
     print('----------------------------------------------------------------------')
 else:
     print(f'Mass Flow continuity error = {mf_convergence:.6f}')
@@ -76,10 +76,10 @@ resid_frame = pd.DataFrame(datastore)
 for column in resid_frame.columns:
     resid_mean = resid_frame.iloc[resid_frame.shape[0]-n_interval:][column].mean()
     if resid_mean <= 1e-5:
-        print(f'{column} residuals converged < 1e-5')
+        print(f'{column} residuals converged:\t\t {resid_mean:1.3e} < 1e-5')
         continue
     else: 
-        print(f'{column} > 1e-5, residuals not converged')
+        print(f'{column} > 1e-5, residuals NOT converged')
         print('Continue running simulation until convergence with lower residuals')
         sys.exit()
 
@@ -94,7 +94,7 @@ for name in residuals:
 # 3) Solution Monitor Convergence    
 # ----------------------------------------------------------------------------
 
-monitors = ['T_max', 'rho_min', 'U_jet', 'MF_jet', 'entrainment']
+monitors = ['T_max','rho_min', 'U_jet', 'MF_jet', 'entrainment']
 conv_lim = 0.0005
 
 # Extract data and convert to dataframe
@@ -124,10 +124,10 @@ for column in monit_frame.columns:
     monit_prev_mean =  monit_frame.iloc[monit_frame.shape[0]-2*n_interval:monit_frame.shape[0]-n_interval][column].mean()
     conv = abs(monit_mean - monit_prev_mean) / abs(monit_mean)
     if conv <= conv_lim:
-        print(f'{column} residuals converged: {conv:1.4e} < {conv_lim:.1e}')
+        print(f'{column} converged:\t\t {conv:1.3e} < {conv_lim:.1e}')
         continue
     else: 
-        print(f'{column} > {conv_lim:.1e}, residuals not converged')
-        print('Continue running simulation until convergence with lower residuals')
-        sys.exit()
+        print(f'{conv:1.3e} > {conv_lim:.1e}, {column} NOT converged')
+        print('Continue running simulation . . . ')
+        # sys.exit()
 

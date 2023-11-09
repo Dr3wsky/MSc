@@ -43,13 +43,13 @@ def extract_postproc(dir_loc, name):
         for col in headers:
             if col == f'max({name})' or col == f'min({name})':
                 raw_data = [float(row.split()[idx-1]) for row in data[start:]]
-        idx += 1
+            idx += 1
 
     elif file == 'surfaceFieldValue.dat' and name == 'U':
         idx = 0
         for col in headers:
             if col == f'weightedAreaAverage({name})':
                 raw_data = [float(row.split()[idx-1][1:]) for row in data[start:]]
-        idx += 1
+            idx += 1
 
     return raw_data
