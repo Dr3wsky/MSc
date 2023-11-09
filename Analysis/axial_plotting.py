@@ -1,7 +1,9 @@
 """
 This script performs data analysis on experimental and simulated data from OpenFOAM.
-The OpenFOAM data is extracted from Paraview using plotOverLine method along the axis of a confined jet.
-The python scrtipt herin loads data files, processes the information, and generates plots of the specified variable
+The OpenFOAM data is extracted from Paraview using plotOverLine method along the centreline axis of a confined jet.
+The simulation data is loaded as a dictionary where the value is a Dataframe for each Mesh as the corresponding key.
+Due to the nature of experimental data, it is unpacked frfom a pickeld file and loaded as a dictionary where values are multi-dimentional arrays.
+Plots for specified variables are generated with matplotlib.
 
 Note: Ensure the necessary data files are available in the specified file paths before running this script.
 
@@ -34,29 +36,37 @@ with open('exp_data.pkl', 'rb') as file:
     file.close()
     
 # Assign experimental data range and variable
-exp_var = 'v_centreline'
+exp_var = 'u_centreline'
 exp_xd = exp_data['x'][0] / 6.4
-# exp_start = np.where(exp_data[f'{exp_var}'] != 0)[0][0]
-# exp_end = np.where(exp_data[f'{exp_var}'][exp_start:] < 100)[0][0]
-exp_start = 10
+# # Indicies for x plotting
+exp_start = np.where(exp_data[f'{exp_var}'] > 0)[0][0]
 exp_end = len(exp_xd)
+# # Indicies for y-plotting
+# exp_start = 10
+# exp_end = len(exp_xd)
 
     
 sim_data = {}
 # Load simulation data
 for i in range(len(sim_names)):
     sim_data.update({sim_names[i]: pd.read_csv(dir_home + sim_locs[i] + '\\axial_data.csv')})
+    # Add normalized data
+    Ux_norm = sim_data[sim_names[i]]['U:0']/np.max(sim_data[f'{sim_names[i]}']['U:0'])
+    Uy_norm = sim_data[sim_names[i]]['U:1']/np.max(sim_data[f'{sim_names[i]}']['U:1'])
+    sim_data[sim_names[i]]['Ux_norm'] = Ux_norm
+    sim_data[sim_names[i]]['Uy_norm'] = Uy_norm
+        
 
 # Assign plotting range and variable of interest
 sim_xd = (sim_data[f'{sim_names[0]}']['Points:0'] - 0.33533) / 0.0064
 sim_end = np.where(sim_xd > 40 )[0][0]
-sim_var = 'UMean:1'
+sim_var = 'UMean:0'
 
 
 # Plotting
 # ----------------------------------------------------------------------------     
-# legend = ['Experimental PIV']
-legend = []
+legend = ['Experimental PIV']
+# legend = []
 plt.clf()
 # styles = plt.style.available
 # print(styles)
@@ -66,10 +76,8 @@ plt.style.use('seaborn-v0_8-bright')
 plt.figure(dpi=1000)
 fig, ax = plt.subplots()
 
-
-
 # Plot data
-# ax.plot(exp_xd[exp_start:exp_end-4], exp_data[f'{exp_var}'][0][exp_start:exp_end], linestyle='--', linewidth=0.8 )
+ax.plot(exp_xd[exp_start:exp_end], exp_data[f'{exp_var}'][exp_start:exp_end], linestyle='--', linewidth=0.8 )
 i = 1
 for name in sim_names:
     ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], color=bright[i], linewidth=1.25)
@@ -79,7 +87,8 @@ for name in sim_names:
 # Plot settings
 ax.grid(True, which='minor')
 ax.set_xlim([0, 25])
-ax.set_ylabel('$U_y$\t\n [m/s]', fontsize=12, labelpad=10)
+ax.set_ylim([100, 425])
+ax.set_ylabel('$U_x$\t\n [m/s]', fontsize=12, labelpad=10)
 ax.yaxis.label.set(rotation='horizontal', ha='right');
 ax.set_xlabel('Axial Position $x/D_{jet}$', fontsize=12, labelpad=10)
 ax.set_title('Centreline Velocity Profile', fontsize=14, pad=10)
@@ -87,5 +96,5 @@ ax.legend(legend,fontsize=10)
 
 plt.show()
 
-fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Grid Independence\\Uy_M1-4.png',
+fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Grid Independence\\Ux_M1-4_PIV.png',
         dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
