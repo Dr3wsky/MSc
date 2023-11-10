@@ -38,9 +38,40 @@ for num, name in enumerate(files):
     if name[:11] == 'radial_data':
         all_pos.append( f'{name[15:-4]}')
         sim_data.update({f'{name[15:-4]}': pd.read_csv(dir_home + sim_locs[0] + '\\' + name)})
-        
-test = 'holder'
 
+# Select what positions and variable to plot        
+xd_pos = np.linspace(0, 30, 13)
+r_dimless = sim_data['0.0']['Points:1']/np.max(sim_data['0.0']['Points:1'])
+sim_var = 'UMean:0'
 
+# # PLOTTING
+# # ---------------------------------------------------------------------------
 
+# PLOT SETTINTGS
+legend = []
+plt.clf()
+# styles = plt.style.available
+# print(styles)
+bright = sns.set_palette(sns.color_palette("bright"))
+plt.style.use('seaborn-v0_8-bright')
+plt.figure(dpi=1000)
+mpl.rcParams['font.family'] = 'book antiqua'
+
+# PLOT DATA
+fig, ax = plt.subplots()
+for pos in xd_pos:
+    ax.plot(r_dimless, sim_data[f'{pos}'][sim_var])
+    legend.append(f'xd = {pos}')  
+
+ax.grid(True, which='minor')
+# ax.set_xlim([0, 25])
+# ax.set_ylim([.25, 1])
+ax.set_ylabel('Velocity: $u_i$', fontsize=14, labelpad=15)
+# ax.yaxis.label.set(rotation='horizontal', ha='right');
+ax.set_xlabel('Radial Position: $r/R_{tube}$', fontsize=12, labelpad=10)
+ax.set_title('Radial Velocity Profile', fontsize=14, pad=12)
+ax.legend(legend,fontsize=10)
+
+fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Radial Iso\\Ux_M4.png',
+        dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
 

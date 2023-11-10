@@ -23,11 +23,10 @@ import seaborn as sns
 import matplotlib as mpl
 
 # # LOAD & HANDLE DATA
-# # ----------------------------------------------------------------------------   
+# # ---------------------------------------------------------------------------  
 
 # Assign file location and simulations
 dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
-div = '//'
 sim_locs = ['PIV_JetSim_M1','PIV_JetSim_M2', 'PIV_JetSim_M3', 'PIV_JetSim_M4']
 sim_names = ['M1', 'M2', 'M3', 'M4']
 
@@ -54,10 +53,10 @@ for i in range(len(sim_names)):
     # # Add normalized data
     # Ux_norm = sim_data[sim_names[i]]['UMean:0']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
     # Uy_norm = sim_data[sim_names[i]]['UMean:1']/np.max(sim_data[f'{sim_names[i]}']['UMean:1'])
-    tke_norm = sim_data[sim_names[i]]['kMean']/(np.max(sim_data[f'{sim_names[i]}']['UMean:0'])**2)
+    # tke_norm = sim_data[sim_names[i]]['kMean']/(np.max(sim_data[f'{sim_names[i]}']['UMean:0'])**2)
     # sim_data[sim_names[i]]['UNorm:0'] = Ux_norm
     # sim_data[sim_names[i]]['UNorm:1'] = Uy_norm
-    sim_data[sim_names[i]]['kNorm'] = tke_norm
+    # sim_data[sim_names[i]]['kNorm'] = tke_norm
     # sim_data[sim_names[i]].to_csv(dir_home + sim_locs[i] + '\\axial_data.csv',index=False)
     
 
@@ -72,14 +71,15 @@ sim_var = 'kNorm'
 
 
 # # PLOTTING
-# # ----------------------------------------------------------------------------     
+# # ---------------------------------------------------------------------------   
+
+# PLOT SETTINGS
 # legend = ['Experimental PIV']
 legend = []
 plt.clf()
 # styles = plt.style.available
 # print(styles)
-bright = sns.color_palette("bright")
-sns.set_palette(bright)
+bright = sns.set_palette(sns.color_palette("bright"))
 plt.style.use('seaborn-v0_8')
 plt.figure(dpi=1000)
 mpl.rcParams['font.family'] = 'book antiqua'
@@ -91,11 +91,9 @@ fig, ax = plt.subplots()
 # ax.plot(exp_xd[exp_start:exp_end], exp_data[f'{exp_var}'][exp_start:exp_end], linestyle='--', linewidth=1 )
 # y data range experimental
 # ax.plot(exp_xd[exp_start:exp_end-4], exp_data[f'{exp_var}'][0][exp_start:exp_end], linestyle='--', linewidth=1 )
-i = 1
 for name in sim_names:
-    ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], color=bright[i], linewidth=1.1)
-    legend += [f'CFD, k-omega SST {name}']
-    i += 1        
+    ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linewidth=1.1)
+    legend.append(f'CFD, k-omega SST {name}')      
 
 # # PLOT SETTINGS
 ax.grid(True, which='minor')
