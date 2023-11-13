@@ -50,14 +50,15 @@ sim_data = {}
 # LOAD SIMULATION DATA
 for i in range(len(sim_names)):
     sim_data.update({sim_names[i]: pd.read_csv(dir_home + sim_locs[i] + '\\axial_data.csv')})
-    # # Add normalized data
-    # Ux_norm = sim_data[sim_names[i]]['UMean:0']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
-    # Uy_norm = sim_data[sim_names[i]]['UMean:1']/np.max(sim_data[f'{sim_names[i]}']['UMean:1'])
-    # tke_norm = sim_data[sim_names[i]]['kMean']/(np.max(sim_data[f'{sim_names[i]}']['UMean:0'])**2)
-    # sim_data[sim_names[i]]['UNorm:0'] = Ux_norm
-    # sim_data[sim_names[i]]['UNorm:1'] = Uy_norm
-    # sim_data[sim_names[i]]['kNorm'] = tke_norm
-    # sim_data[sim_names[i]].to_csv(dir_home + sim_locs[i] + '\\axial_data.csv',index=False)
+    # Add normalized data
+    if 'UNorm:0' not in sim_data[sim_names[i]]:
+        Ux_norm = sim_data[sim_names[i]]['UMean:0']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
+        Uy_norm = sim_data[sim_names[i]]['UMean:1']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
+        tke_norm = sim_data[sim_names[i]]['kMean']/(np.max(sim_data[f'{sim_names[i]}']['UMean:0'])**2)
+        sim_data[sim_names[i]]['UNorm:0'] = Ux_norm
+        sim_data[sim_names[i]]['UNorm:1'] = Uy_norm
+        sim_data[sim_names[i]]['kNorm'] = tke_norm
+        sim_data[sim_names[i]].to_csv(dir_home + sim_locs[i] + '\\axial_data.csv',index=False)
     
 
 # # Re-save csv with normalized data and then remove the norm calcs. . . ? 

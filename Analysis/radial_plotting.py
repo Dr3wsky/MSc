@@ -38,6 +38,15 @@ for num, name in enumerate(files):
     if name[:11] == 'radial_data':
         all_pos.append( f'{name[15:-4]}')
         sim_data.update({f'{name[15:-4]}': pd.read_csv(dir_home + sim_locs[0] + '\\' + name)})
+        # # Add normalized data, currently on ly for velocity. Will calc excess velocity , RNorm and such in another script
+        if 'UNorm:0' not in sim_data[name[15:-4]]:
+            Ux_norm = sim_data[name[15:-4]]['UMean:0']/np.max(sim_data[name[15:-4]]['UMean:0'])
+            Uy_norm = sim_data[name[15:-4]]['UMean:1']/np.max(sim_data[name[15:-4]]['UMean:0'])
+            tke_norm = sim_data[name[15:-4]]['kMean']/(np.max(sim_data[name[15:-4]]['UMean:0'])**2)
+            sim_data[name[15:-4]]['UNorm:0'] = Ux_norm
+            sim_data[name[15:-4]]['UNorm:1'] = Uy_norm
+            sim_data[name[15:-4]]['kNorm'] = tke_norm
+            sim_data[name[15:-4]].to_csv(f'{dir_home}{sim_locs[0]}\\{name}',index=False)
 
 # Select what positions and variable to plot        
 xd_pos = np.linspace(0, 30, 13)
