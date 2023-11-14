@@ -27,8 +27,8 @@ import matplotlib as mpl
 
 # Assign file location and simulations
 dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
-sim_locs = ['PIV_JetSim_M1','PIV_JetSim_M2', 'PIV_JetSim_M3', 'PIV_JetSim_M4']
-sim_names = ['M1', 'M2', 'M3', 'M4']
+sim_locs = [ '15deg_PIVJetSim_M4', '15deg_PIVJetSim_M4_close-cell', '15deg_PIVJetSim_M4_close-wall', '15deg_PIVJetSim_M4_far-cell', '15deg_PIVJetSim_M4_far-wall']
+sim_names = ['15deg centroid', '15deg close-cell', '15deg close-wall', '15deg far-cell', '15deg far-wall']
 
 # LOAD EXP DATA
 with open('exp_data.pkl', 'rb') as file:
@@ -54,9 +54,11 @@ for i in range(len(sim_names)):
     if 'UNorm:0' not in sim_data[sim_names[i]]:
         Ux_norm = sim_data[sim_names[i]]['UMean:0']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
         Uy_norm = sim_data[sim_names[i]]['UMean:1']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
+        Uz_norm = sim_data[sim_names[i]]['UMean:2']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
         tke_norm = sim_data[sim_names[i]]['kMean']/(np.max(sim_data[f'{sim_names[i]}']['UMean:0'])**2)
         sim_data[sim_names[i]]['UNorm:0'] = Ux_norm
         sim_data[sim_names[i]]['UNorm:1'] = Uy_norm
+        sim_data[sim_names[i]]['UNorm:2'] = Uz_norm
         sim_data[sim_names[i]]['kNorm'] = tke_norm
         sim_data[sim_names[i]].to_csv(dir_home + sim_locs[i] + '\\axial_data.csv',index=False)
     
@@ -67,8 +69,8 @@ for i in range(len(sim_names)):
 
 # Assign plotting range and variable of interest
 sim_xd = (sim_data[f'{sim_names[0]}']['Points:0'] - 0.33533) / 0.0064
-sim_end = np.where(sim_xd > 40 )[0][0]
-sim_var = 'kNorm'
+sim_end = np.where(sim_xd > 80 )[0][0]
+sim_var = 'UNorm:2'
 
 
 # # PLOTTING
@@ -81,9 +83,10 @@ plt.clf()
 # styles = plt.style.available
 # print(styles)
 bright = sns.set_palette(sns.color_palette("bright"))
-plt.style.use('seaborn-v0_8')
+plt.style.use('seaborn-v0_8-bright')
 plt.figure(dpi=1000)
 mpl.rcParams['font.family'] = 'book antiqua'
+
 
 fig, ax = plt.subplots()
 
@@ -93,21 +96,28 @@ fig, ax = plt.subplots()
 # y data range experimental
 # ax.plot(exp_xd[exp_start:exp_end-4], exp_data[f'{exp_var}'][0][exp_start:exp_end], linestyle='--', linewidth=1 )
 for name in sim_names:
-    ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linewidth=1.1)
-    legend.append(f'CFD, k-omega SST {name}')      
+    if name != '15deg centroid':
+        if name[-4:] == 'wall':
+            ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linewidth=0.9)
+        else: 
+            ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='--', linewidth=0.9)
+    else:
+        ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='--', linewidth=1.15)
+    legend.append(f'{name}, CFD k-omega SST')      
 
 # # PLOT SETTINGS
 ax.grid(True, which='minor')
-ax.set_xlim([0, 25])
+ax.set_xlim([0, 60])
 # ax.set_ylim([.25, 1])
-ax.set_ylabel('$\\frac{k}{u^2_{jet}}$', fontsize=18, labelpad=15)
+ax.set_ylabel('$\\frac{u_k}{u_{jet}}$', fontsize=20, labelpad=15)
+# ax.set_ylabel('$u_k$\t \n[m/s]', fontsize=16, labelpad=15)
 ax.yaxis.label.set(rotation='horizontal', ha='right');
 ax.set_xlabel('Axial Position\t $x/D_{jet}$', fontsize=12, labelpad=10)
-ax.set_title('Centreline Turbulent Kinetic Energy Profile', fontsize=14, pad=12)
+ax.set_title('Centreline Velocity Profile', fontsize=14, pad=12)
 ax.legend(legend,fontsize=10)
 
 
 plt.show()
 
-fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Grid Independence\\tkeNorm_M1-4.png',
+fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Wedge Compare\\UzNorm_15deg_compare-all-pos.png',
         dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
