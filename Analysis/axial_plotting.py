@@ -27,8 +27,8 @@ import matplotlib as mpl
 
 # Assign file location and simulations
 dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
-sim_locs = [ '15deg_PIVJetSim_M4', '15deg_PIVJetSim_M4_close-cell', '15deg_PIVJetSim_M4_close-wall', '15deg_PIVJetSim_M4_far-cell', '15deg_PIVJetSim_M4_far-wall']
-sim_names = ['15deg centroid', '15deg close-cell', '15deg close-wall', '15deg far-cell', '15deg far-wall']
+sim_locs = [ 'PIV_JetSim_M4', '15deg_PIVJetSim_M4']
+sim_names = ['5deg wedge', '15deg wedge']
 
 # LOAD EXP DATA
 with open('exp_data.pkl', 'rb') as file:
@@ -61,6 +61,16 @@ for i in range(len(sim_names)):
         sim_data[sim_names[i]]['UNorm:2'] = Uz_norm
         sim_data[sim_names[i]]['kNorm'] = tke_norm
         sim_data[sim_names[i]].to_csv(dir_home + sim_locs[i] + '\\axial_data.csv',index=False)
+    if 'Points:r' not in sim_data[sim_names[i]]:
+        r = np.sqrt(sim_data[sim_names[i]]['Points:0']**2 + sim_data[sim_names[i]]['Points:1']**2)
+        theta = np.arctan(sim_data[sim_names[i]]['Points:0'] / sim_data[sim_names[i]]['Points:1'])
+        sim_data[sim_names[i]]['Points:r'] = r
+        sim_data[sim_names[i]]['Points:theta'] = theta
+    # if 'UMean:r' not in sim_data[sim_names[i]]:
+    #     r = np.sqrt(sim_data[sim_names[i]]['Points:0']**2 + sim_data[sim_names[i]]['Points:1']**2)
+    #     theta = np.arctan(sim_data[sim_names[i]]['Points:0'] / sim_data[sim_names[i]]['Points:1'])
+    #     sim_data[sim_names[i]]['Points:r'] = r
+    #     sim_data[sim_names[i]]['Points:theta'] = theta
     
 
 # # Re-save csv with normalized data and then remove the norm calcs. . . ? 
@@ -70,7 +80,7 @@ for i in range(len(sim_names)):
 # Assign plotting range and variable of interest
 sim_xd = (sim_data[f'{sim_names[0]}']['Points:0'] - 0.33533) / 0.0064
 sim_end = np.where(sim_xd > 80 )[0][0]
-sim_var = 'UNorm:2'
+sim_var = 'UNorm:0'
 
 
 # # PLOTTING
@@ -86,8 +96,6 @@ bright = sns.set_palette(sns.color_palette("bright"))
 plt.style.use('seaborn-v0_8-bright')
 plt.figure(dpi=1000)
 mpl.rcParams['font.family'] = 'book antiqua'
-
-
 fig, ax = plt.subplots()
 
 # # PLOT DATA
@@ -95,21 +103,22 @@ fig, ax = plt.subplots()
 # ax.plot(exp_xd[exp_start:exp_end], exp_data[f'{exp_var}'][exp_start:exp_end], linestyle='--', linewidth=1 )
 # y data range experimental
 # ax.plot(exp_xd[exp_start:exp_end-4], exp_data[f'{exp_var}'][0][exp_start:exp_end], linestyle='--', linewidth=1 )
+
+# Simulation data
 for name in sim_names:
-    if name != '15deg centroid':
-        if name[-4:] == 'wall':
-            ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linewidth=0.9)
-        else: 
-            ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='--', linewidth=0.9)
+    if name[-9:] == 'near wall':
+        ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='--', linewidth=0.9)
+    elif name[-8:] == 'far wall':
+        ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='', marker='o', markersize=2, markevery=2)
     else:
-        ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='--', linewidth=1.15)
-    legend.append(f'{name}, CFD k-omega SST')      
+        ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linewidth=1.15)
+    legend.append(f'{name}, CFD k-omega SST')   
 
 # # PLOT SETTINGS
 ax.grid(True, which='minor')
 ax.set_xlim([0, 60])
 # ax.set_ylim([.25, 1])
-ax.set_ylabel('$\\frac{u_k}{u_{jet}}$', fontsize=20, labelpad=15)
+ax.set_ylabel('$\\frac{u_j}{u_{jet}}$', fontsize=20, labelpad=15)
 # ax.set_ylabel('$u_k$\t \n[m/s]', fontsize=16, labelpad=15)
 ax.yaxis.label.set(rotation='horizontal', ha='right');
 ax.set_xlabel('Axial Position\t $x/D_{jet}$', fontsize=12, labelpad=10)
@@ -119,5 +128,5 @@ ax.legend(legend,fontsize=10)
 
 plt.show()
 
-fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Wedge Compare\\UzNorm_15deg_compare-all-pos.png',
+fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Wedge Compare\\UyNorm_5_deg_all-pos.png',
         dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
