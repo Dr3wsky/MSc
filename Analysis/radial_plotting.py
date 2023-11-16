@@ -28,25 +28,27 @@ import matplotlib as mpl
 
 dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
 sim_locs = ['PIV_JetSim_M4']
-sim_names = ['M4']
+sim_names = ['kw']
 files = os.listdir(dir_home + sim_locs[0])
 all_pos = []
-sim_data = {}
 
-# Read all radial_data.csv files, making dictionary with key of each axial position, value of Dataframe for data
+sim_data = {}
+    
 for num, name in enumerate(files):
     if name[:11] == 'radial_data':
-        all_pos.append( f'{name[15:-4]}')
-        sim_data.update({f'{name[15:-4]}': pd.read_csv(dir_home + sim_locs[0] + '\\' + name)})
+        cur_pos = name[15:-4]
+        all_pos.append(cur_pos)
+        sim_data.update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + name) })
         # # Add normalized data, currently on ly for velocity. Will calc excess velocity , RNorm and such in another script
-        if 'UNorm:0' not in sim_data[name[15:-4]]:
-            Ux_norm = sim_data[name[15:-4]]['UMean:0']/np.max(sim_data[name[15:-4]]['UMean:0'])
-            Uy_norm = sim_data[name[15:-4]]['UMean:1']/np.max(sim_data[name[15:-4]]['UMean:0'])
-            tke_norm = sim_data[name[15:-4]]['kMean']/(np.max(sim_data[name[15:-4]]['UMean:0'])**2)
-            sim_data[name[15:-4]]['UNorm:0'] = Ux_norm
-            sim_data[name[15:-4]]['UNorm:1'] = Uy_norm
-            sim_data[name[15:-4]]['kNorm'] = tke_norm
-            sim_data[name[15:-4]].to_csv(f'{dir_home}{sim_locs[0]}\\{name}',index=False)
+        if 'UNorm:0' not in sim_data[cur_pos]:
+            Ux_norm = sim_data[cur_pos]['UMean:0']/np.max(sim_data[cur_pos]['UMean:0'])
+            Uy_norm = sim_data[cur_pos]['UMean:1']/np.max(sim_data[cur_pos]['UMean:0'])
+            tke_norm = sim_data[cur_pos]['kMean']/(np.max(sim_data[cur_pos]['UMean:0'])**2)
+            sim_data[cur_pos]['UNorm:0'] = Ux_norm
+            sim_data[cur_pos]['UNorm:1'] = Uy_norm
+            sim_data[cur_pos]['kNorm'] = tke_norm
+            sim_data[cur_pos].to_csv(f'{dir_home}{sim_locs[0]}\\{name}',index=False)
+## Add r and theta calcs for points and velocities, from axial calcs
 
 # Select what positions and variable to plot        
 xd_pos = np.linspace(0, 30, 13)
@@ -69,7 +71,7 @@ mpl.rcParams['font.family'] = 'book antiqua'
 # PLOT DATA
 fig, ax = plt.subplots()
 for pos in xd_pos:
-    ax.plot(r_dimless, sim_data[f'{pos}'][sim_var])
+    ax.plot(r_dimless, sim_data[pos][sim_var])
     legend.append(f'xd = {pos}')  
 
 ax.grid(True, which='minor')
