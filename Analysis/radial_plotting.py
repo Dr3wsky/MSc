@@ -39,11 +39,12 @@ for num, name in enumerate(files):
         cur_pos = name[15:-4]
         all_pos.append(cur_pos)
         sim_data.update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + name) })
-        # # Add normalized data, currently on ly for velocity. Will calc excess velocity , RNorm and such in another script
+        # # Add normalized data for simulation outputs. Will calculate excess,half-width, etc in other scripts. 
         if 'UNorm:0' not in sim_data[cur_pos]:
-            Ux_norm = sim_data[cur_pos]['UMean:0']/np.max(sim_data[cur_pos]['UMean:0'])
-            Uy_norm = sim_data[cur_pos]['UMean:1']/np.max(sim_data[cur_pos]['UMean:0'])
-            tke_norm = sim_data[cur_pos]['kMean']/(np.max(sim_data[cur_pos]['UMean:0'])**2)
+            u_jet = np.max(sim_data[cur_pos]['UMean:0'])
+            Ux_norm = sim_data[cur_pos]['UMean:0'] / u_jet 
+            Uy_norm = sim_data[cur_pos]['UMean:1'] / u_jet
+            tke_norm = sim_data[cur_pos]['kMean']/ u_jet**2
             sim_data[cur_pos]['UNorm:0'] = Ux_norm
             sim_data[cur_pos]['UNorm:1'] = Uy_norm
             sim_data[cur_pos]['kNorm'] = tke_norm
@@ -51,7 +52,7 @@ for num, name in enumerate(files):
 ## Add r and theta calcs for points and velocities, from axial calcs
 
 # Select what positions and variable to plot        
-xd_pos = np.linspace(0, 30, 13)
+xd_pos = np.linspace(12.5, 25, 6)
 r_dimless = sim_data['0.0']['Points:1']/np.max(sim_data['0.0']['Points:1'])
 sim_var = 'UMean:0'
 
@@ -71,7 +72,7 @@ mpl.rcParams['font.family'] = 'book antiqua'
 # PLOT DATA
 fig, ax = plt.subplots()
 for pos in xd_pos:
-    ax.plot(r_dimless, sim_data[pos][sim_var])
+    ax.plot(r_dimless, sim_data[f'{pos}'][sim_var], linewidth=0.85)
     legend.append(f'xd = {pos}')  
 
 ax.grid(True, which='minor')
