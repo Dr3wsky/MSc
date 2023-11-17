@@ -29,6 +29,7 @@ sim_names = ['kw']
 files = os.listdir(fr'{dir_home}\{sim_locs[0]}')
 all_pos = []
 r_tube = 0.025396
+r_jet = 0.0032;
 U_2 = {}
 U_jet = {}
 U_excess_centreline = {}
@@ -36,8 +37,13 @@ B = {}
 
 sim_data = {}
 
+# # READ DATA AND CLACULATE PARAMETERS
+# # ---------------------------------------------------------------------------
+
+# SIMULATION DATA
 # Read all radial_data.csv files, making dictionary with key of simulation, containing;
 # a dictionary with key of each axial position, value of Dataframe for data
+
 for sim in sim_names:
     sim_data.update({ sim : {} })
     # Loop through all radial position of each simulation folder
@@ -57,6 +63,7 @@ for sim in sim_names:
                 Ux_norm = sim_data[sim][cur_pos]['UMean:0'] / u_jet 
                 Uy_norm = sim_data[sim][cur_pos]['UMean:1']/ u_jet
                 tke_norm = sim_data[sim][cur_pos]['kMean']/ u_jet**2
+                # Save new vals to dataset
                 sim_data[sim][cur_pos]['UNorm:0'] = Ux_norm
                 sim_data[sim][cur_pos]['UNorm:1'] = Uy_norm
                 sim_data[sim][cur_pos]['kNorm'] = tke_norm
@@ -91,14 +98,25 @@ for sim in sim_names:
                 B.update({ cur_pos : b })
                 zeta = sim_data[sim][cur_pos]['Points:1'] / b
                 
-                
-
-test = 'holder'
 # Select what positions and variable to plot        
 xd_pos = np.linspace(15, 30, 7)
 r_dimless = sim_data['kw']['0.0']['Points:1']/np.max(sim_data['kw']['0.0']['Points:1'])
 sim_var = 'UMean:0'
 
+
+# # EXPERIMENTAL DATA
+# Read data from pickled file
+with open('exp_data.pkl', 'rb') as file:
+    exp_data = pickle.load(file)
+    file.close()  
+    
+# Use scale from raw exp to set and find xd locations
+scale = 0.3654
+exp_xd_ass = np.linspace(10, 19.75, 40);
+exp_x_loc= np.round( exp_xd_ass * (r_jet*2*1000) / scale );
+exp_var = 'u_centreline'
+
+              
 # # PLOTTING
 # # ---------------------------------------------------------------------------
 
