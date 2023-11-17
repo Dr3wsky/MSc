@@ -23,10 +23,10 @@ import matplotlib as mpl
 # # DEFINE WORKSPACE AND INITIALIZE VARS
 # # ---------------------------------------------------------------------------
 
-dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
+dir_home = r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations'
 sim_locs = ['PIV_JetSim_M4']
 sim_names = ['kw']
-files = os.listdir(dir_home + sim_locs[0])
+files = os.listdir(fr'{dir_home}\{sim_locs[0]}')
 all_pos = []
 r_tube = 0.025396
 U_2 = {}
@@ -46,7 +46,7 @@ for sim in sim_names:
             cur_pos = filename[15:-4]
             all_pos.append(cur_pos)
             # Update DF to include data for current radial postion
-            sim_data[sim].update({ cur_pos : pd.read_csv(f'{dir_home}{sim_locs[0]}\\{filename}') })
+            sim_data[sim].update({ cur_pos : pd.read_csv(fr'{dir_home}\{sim_locs[0]}\{filename}') })
             
             # Add normalized velocity data
             u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
@@ -60,7 +60,7 @@ for sim in sim_names:
                 sim_data[sim][cur_pos]['UNorm:0'] = Ux_norm
                 sim_data[sim][cur_pos]['UNorm:1'] = Uy_norm
                 sim_data[sim][cur_pos]['kNorm'] = tke_norm
-                sim_data[sim][cur_pos].to_csv(f'{dir_home}{sim_locs[0]}\\{filename}',index=False)
+                sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[0]}\{filename}',index=False)
                 
             # Calculate jet flow parameters
             if 'U_secondary' not in sim_data[sim][cur_pos] and cur_pos != '0.0':
