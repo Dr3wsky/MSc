@@ -28,17 +28,17 @@ import matplotlib as mpl
 
 dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
 sim_locs = ['PIV_JetSim_M4']
-sim_names = ['kw']
+sim_names = ['M4']
 files = os.listdir(dir_home + sim_locs[0])
 all_pos = []
 
 sim_data = {}
     
-for num, name in enumerate(files):
-    if name[:11] == 'radial_data':
-        cur_pos = name[15:-4]
+for filename in files:
+    if filename[:11] == 'radial_data':
+        cur_pos = filename[15:-4]
         all_pos.append(cur_pos)
-        sim_data.update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + name) })
+        sim_data.update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + filename) })
         # # Add normalized data for simulation outputs. Will calculate excess,half-width, etc in other scripts. 
         if 'UNorm:0' not in sim_data[cur_pos]:
             u_jet = np.max(sim_data[cur_pos]['UMean:0'])
@@ -48,7 +48,7 @@ for num, name in enumerate(files):
             sim_data[cur_pos]['UNorm:0'] = Ux_norm
             sim_data[cur_pos]['UNorm:1'] = Uy_norm
             sim_data[cur_pos]['kNorm'] = tke_norm
-            sim_data[cur_pos].to_csv(f'{dir_home}{sim_locs[0]}\\{name}',index=False)
+            sim_data[cur_pos].to_csv(f'{dir_home}{sim_locs[0]}\\{filename}',index=False)
 ## Add r and theta calcs for points and velocities, from axial calcs
 
 # Select what positions and variable to plot        
