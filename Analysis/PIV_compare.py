@@ -37,12 +37,12 @@ sim_data = {}
 # a dictionary with key of each axial position, value of Dataframe for data
 for sim in sim_names:
     sim_data.update({ sim : {} })
-    for num, name in enumerate(files):
-        if name[:11] == 'radial_data':
-            cur_pos = name[15:-4]
+    for filename in files:
+        if filename[:11] == 'radial_data':
+            cur_pos = filename[15:-4]
             all_pos.append(cur_pos)
             # Update DF to include data for current radial postion
-            sim_data[sim].update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + name) })
+            sim_data[sim].update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + filename) })
             
             # Add normalized velocity data
             u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
@@ -55,7 +55,7 @@ for sim in sim_names:
                 sim_data[sim][cur_pos]['UNorm:0'] = Ux_norm
                 sim_data[sim][cur_pos]['UNorm:1'] = Uy_norm
                 sim_data[sim][cur_pos]['kNorm'] = tke_norm
-                sim_data[sim][cur_pos].to_csv(f'{dir_home}{sim_locs[0]}\\{name}',index=False)
+                sim_data[sim][cur_pos].to_csv(f'{dir_home}{sim_locs[0]}\\{filename}',index=False)
                 
             # Calculate secondary and excess velocities
             if 'U_secondary' not in sim_data[sim][cur_pos] and cur_pos != '0.0':
