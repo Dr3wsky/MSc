@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib as mpl
 
-# # DEFINE WORKSPACE AND VARS
+# # DEFINE WORKSPACE AND INITIALIZE VARS
 # # ---------------------------------------------------------------------------
 
 dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
@@ -29,7 +29,10 @@ sim_names = ['kw']
 files = os.listdir(dir_home + sim_locs[0])
 all_pos = []
 r_tube = 0.025396
-U2 = {}
+U_2 = {}
+U_jet = {}
+U_excess_centreline = {}
+B = {}
 
 sim_data = {}
 
@@ -47,6 +50,7 @@ for sim in sim_names:
             
             # Add normalized velocity data
             u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
+            U_jet.update({ cur_pos : u_jet })
             r_dimless = sim_data[sim][cur_pos]['Points:1'] / r_tube
             
             if 'UNorm:0' not in sim_data[sim][cur_pos]:
@@ -58,20 +62,36 @@ for sim in sim_names:
                 sim_data[sim][cur_pos]['kNorm'] = tke_norm
                 sim_data[sim][cur_pos].to_csv(f'{dir_home}{sim_locs[0]}\\{filename}',index=False)
                 
-            # Calculate secondary and excess velocities
+            # Calculate jet flow parameters
             if 'U_secondary' not in sim_data[sim][cur_pos] and cur_pos != '0.0':
-                # Trim the wall effects and fulle develloped flow to find the secondary velocity stream
+                # Trim the wall effects and jet flow
                 y_trim_start = np.where(r_dimless > 0.15)[0][0]
                 y_trim_end = np.where(r_dimless < 0.9)[0][-1]
+                
+                # Use histogram to find common velocity for secondary stream
                 hist, bins = np.histogram(sim_data[sim][cur_pos]['UMean:0'][y_trim_start:y_trim_end], bins=250) 
                 bin_idx = np.where(hist == np.max(hist[:90]))
                 U_secondary = bins[bin_idx[0]]
-                plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=250, edgecolor='black')
-                plt.show()
-                print(f'{cur_pos}:\t {U_secondary}')
-                U2.update({ cur_pos : U_secondary[0] })
+                # plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=250, edgecolor='black')
+                # plt.show()
+                U_2.update({ cur_pos : U_secondary[0] })
                 sim_data[sim][cur_pos]['U_secondary'] = U_secondary[0]
-                test = 'holder'
+                
+                # Calculate excess velocities and normalize
+                u_excess = sim_data[sim][cur_pos]['UMean:0'] - U_secondary[0]
+                u_excess_centreline = np.max(u_excess)
+                U_excess_centreline.update({ cur_pos : u_excess_centreline })
+                f_zeta = sim_data[sim][cur_pos]['UMean:0'] / u_excess_centreline
+                v_norm = sim_data[sim][cur_pos]['UMean:1'] / u_excess_centreline
+                
+                # Find half-width
+                b_velocity = u_excess_centreline / 2
+                b_idx = np.where(u_excess < b_velocity)[0][0]
+                b = sim_data[sim][cur_pos]['Points:1'][b_idx]
+                B.update({ cur_pos : b })
+                zeta = sim_data[sim][cur_pos]['Points:1'] / b
+                
+                
 
 test = 'holder'
 # Select what positions and variable to plot        
