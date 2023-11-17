@@ -42,7 +42,7 @@ for sim in sim_names:
             cur_pos = filename[15:-4]
             all_pos.append(cur_pos)
             # Update DF to include data for current radial postion
-            sim_data[sim].update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + filename) })
+            sim_data.update({ cur_pos : pd.read_csv(f'{dir_home}{sim_locs[0]}\\{filename}') })
             
             # Add normalized velocity data
             u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])

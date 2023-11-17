@@ -38,7 +38,7 @@ for filename in files:
     if filename[:11] == 'radial_data':
         cur_pos = filename[15:-4]
         all_pos.append(cur_pos)
-        sim_data.update({ cur_pos : pd.read_csv(dir_home + sim_locs[0] + '\\' + filename) })
+        sim_data.update({ cur_pos : pd.read_csv(f'{dir_home}{sim_locs[0]}\\{filename}') })
         # # Add normalized data for simulation outputs. Will calculate excess,half-width, etc in other scripts. 
         if 'UNorm:0' not in sim_data[cur_pos]:
             u_jet = np.max(sim_data[cur_pos]['UMean:0'])
