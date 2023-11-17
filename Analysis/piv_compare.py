@@ -37,12 +37,13 @@ sim_data = {}
 # a dictionary with key of each axial position, value of Dataframe for data
 for sim in sim_names:
     sim_data.update({ sim : {} })
+    # Loop through all radial position of each simulation folder
     for filename in files:
         if filename[:11] == 'radial_data':
             cur_pos = filename[15:-4]
             all_pos.append(cur_pos)
             # Update DF to include data for current radial postion
-            sim_data.update({ cur_pos : pd.read_csv(f'{dir_home}{sim_locs[0]}\\{filename}') })
+            sim_data[sim].update({ cur_pos : pd.read_csv(f'{dir_home}{sim_locs[0]}\\{filename}') })
             
             # Add normalized velocity data
             u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
@@ -59,24 +60,20 @@ for sim in sim_names:
                 
             # Calculate secondary and excess velocities
             if 'U_secondary' not in sim_data[sim][cur_pos] and cur_pos != '0.0':
-                # Trim the wall effects to find the secondary velocity stream
-                y_trim_end = np.where(r_dimless > 0.85)[0][0]
-                hist, bins = np.histogram(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=100) 
+                # Trim the wall effects and fulle develloped flow to find the secondary velocity stream
+                y_trim_start = np.where(r_dimless > 0.15)[0][0]
+                y_trim_end = np.where(r_dimless < 0.9)[0][-1]
+                hist, bins = np.histogram(sim_data[sim][cur_pos]['UMean:0'][y_trim_start:y_trim_end], bins=250) 
                 bin_idx = np.where(hist == np.max(hist[:90]))
                 U_secondary = bins[bin_idx[0]]
-                plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=100, edgecolor='black')
+                plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=250, edgecolor='black')
                 plt.show()
                 print(f'{cur_pos}:\t {U_secondary}')
                 U2.update({ cur_pos : U_secondary[0] })
                 sim_data[sim][cur_pos]['U_secondary'] = U_secondary[0]
-                test = 'jholder'
-               
+                test = 'holder'
 
-                
-                
-                
-
-
+test = 'holder'
 # Select what positions and variable to plot        
 xd_pos = np.linspace(15, 30, 7)
 r_dimless = sim_data['kw']['0.0']['Points:1']/np.max(sim_data['kw']['0.0']['Points:1'])
