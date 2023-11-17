@@ -26,7 +26,7 @@ import matplotlib as mpl
 # # ---------------------------------------------------------------------------  
 
 # Assign file location and simulations
-dir_home = 'C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\'
+dir_home = r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations'
 sim_locs = [ 'PIV_JetSim_M4', '15deg_PIVJetSim_M4']
 sim_names = ['5deg wedge', '15deg wedge']
 
@@ -49,29 +49,32 @@ exp_end = len(exp_xd)
 sim_data = {}
 # LOAD SIMULATION DATA
 for i in range(len(sim_names)):
-    sim_data.update({sim_names[i]: pd.read_csv(dir_home + sim_locs[i] + '\\axial_data.csv')})
+    sim_data.update({sim_names[i]: pd.read_csv(fr'{dir_home}\{sim_locs[i]}\axial_data.csv')})
     # Add normalized data
     if 'UNorm:0' not in sim_data[sim_names[i]]:
-        Ux_norm = sim_data[sim_names[i]]['UMean:0']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
-        Uy_norm = sim_data[sim_names[i]]['UMean:1']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
-        Uz_norm = sim_data[sim_names[i]]['UMean:2']/np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
-        tke_norm = sim_data[sim_names[i]]['kMean']/(np.max(sim_data[f'{sim_names[i]}']['UMean:0'])**2)
+        Ux_norm = sim_data[sim_names[i]]['UMean:0'] / np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
+        Uy_norm = sim_data[sim_names[i]]['UMean:1'] / np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
+        Uz_norm = sim_data[sim_names[i]]['UMean:2'] / np.max(sim_data[f'{sim_names[i]}']['UMean:0'])
+        tke_norm = sim_data[sim_names[i]]['kMean'] / (np.max(sim_data[f'{sim_names[i]}']['UMean:0'])**2)
         sim_data[sim_names[i]]['UNorm:0'] = Ux_norm
         sim_data[sim_names[i]]['UNorm:1'] = Uy_norm
         sim_data[sim_names[i]]['UNorm:2'] = Uz_norm
         sim_data[sim_names[i]]['kNorm'] = tke_norm
-        sim_data[sim_names[i]].to_csv(dir_home + sim_locs[i] + '\\axial_data.csv',index=False)
+        sim_data[sim_names[i]].to_csv(fr'{dir_home}\{sim_locs[i]}\axial_data.csv',index=False)
+        
+    # Convert to polar coords    
     if 'Points:r' not in sim_data[sim_names[i]]:
-        r = np.sqrt(sim_data[sim_names[i]]['Points:0']**2 + sim_data[sim_names[i]]['Points:1']**2)
-        theta = np.arctan(sim_data[sim_names[i]]['Points:0'] / sim_data[sim_names[i]]['Points:1'])
+        r = np.sqrt(sim_data[sim_names[i]]['Points:1']**2 + sim_data[sim_names[i]]['Points:2']**2)
+        theta_rads = np.arctan(sim_data[sim_names[i]]['Points:2'] / sim_data[sim_names[i]]['Points:1'])
         sim_data[sim_names[i]]['Points:r'] = r
-        sim_data[sim_names[i]]['Points:theta'] = theta
-    # if 'UMean:r' not in sim_data[sim_names[i]]:
-    #     r = np.sqrt(sim_data[sim_names[i]]['Points:0']**2 + sim_data[sim_names[i]]['Points:1']**2)
-    #     theta = np.arctan(sim_data[sim_names[i]]['Points:0'] / sim_data[sim_names[i]]['Points:1'])
-    #     sim_data[sim_names[i]]['Points:r'] = r
-    #     sim_data[sim_names[i]]['Points:theta'] = theta
-    
+        sim_data[sim_names[i]]['Points:theta'] = theta_rads
+        sim_data[sim_names[i]].to_csv(dir_home + sim_locs[i] + '\\axial_data.csv',index=False)
+    if 'UMean:r' not in sim_data[sim_names[i]]:
+        UMean_r = sim_data[sim_names[i]]['UMean:1'] * np.cos(sim_data[sim_names[i]]['Points:theta']) 
+        UMean_theta = -sim_data[sim_names[i]]['UMean:1'] * np.sin(sim_data[sim_names[i]]['Points:theta']) 
+        sim_data[sim_names[i]]['UMean:r'] = UMean_r
+        sim_data[sim_names[i]]['UMean:theta'] = UMean_theta
+        sim_data[sim_names[i]].to_csv(fr'{dir_home}\{sim_locs[i]}\axial_data.csv',index=False)
 
 # # Re-save csv with normalized data and then remove the norm calcs. . . ? 
 # df.to_csv('data.csv', index=False)
@@ -80,7 +83,7 @@ for i in range(len(sim_names)):
 # Assign plotting range and variable of interest
 sim_xd = (sim_data[f'{sim_names[0]}']['Points:0'] - 0.33533) / 0.0064
 sim_end = np.where(sim_xd > 80 )[0][0]
-sim_var = 'UNorm:0'
+sim_var = 'UMean:theta'
 
 
 # # PLOTTING
@@ -106,10 +109,8 @@ fig, ax = plt.subplots()
 
 # Simulation data
 for name in sim_names:
-    if name[-9:] == 'near wall':
+    if name == '15deg wedge':
         ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='--', linewidth=0.9)
-    elif name[-8:] == 'far wall':
-        ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linestyle='', marker='o', markersize=2, markevery=2)
     else:
         ax.plot(sim_xd[:sim_end], sim_data[f'{name}'][f'{sim_var}'][:sim_end], linewidth=1.15)
     legend.append(f'{name}, CFD k-omega SST')   
@@ -118,8 +119,8 @@ for name in sim_names:
 ax.grid(True, which='minor')
 ax.set_xlim([0, 60])
 # ax.set_ylim([.25, 1])
-ax.set_ylabel('$\\frac{u_j}{u_{jet}}$', fontsize=20, labelpad=15)
-# ax.set_ylabel('$u_k$\t \n[m/s]', fontsize=16, labelpad=15)
+# ax.set_ylabel('$\\frac{u_{\\theta}}{u_{jet}}$', fontsize=20, labelpad=15)
+ax.set_ylabel('$u_{\\theta}$\t \n[m/s]', fontsize=16, labelpad=15)
 ax.yaxis.label.set(rotation='horizontal', ha='right');
 ax.set_xlabel('Axial Position\t $x/D_{jet}$', fontsize=12, labelpad=10)
 ax.set_title('Centreline Velocity Profile', fontsize=14, pad=12)
@@ -128,5 +129,5 @@ ax.legend(legend,fontsize=10)
 
 plt.show()
 
-fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\Wedge Compare\\UyNorm_5_deg_all-pos.png',
+fig.savefig(r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\Figures\Python\Wedge Compare\UthetaNorm_5-15_deg_raw.png',
         dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
