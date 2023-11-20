@@ -24,9 +24,8 @@ import matplotlib as mpl
 # # ---------------------------------------------------------------------------
 
 dir_home = r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations'
-sim_locs = ['PIV_JetSim_M4']
-sim_names = ['kw']
-files = os.listdir(fr'{dir_home}\{sim_locs[0]}')
+sim_locs = ['PIV_JetSim_M4', 'kOmegaSSTdd_PIV_JetSim_M4']
+sim_names = ['kwSST', 'kwSSTdd']
 all_pos = []
 r_tube = 0.025396
 r_jet = 0.0032;
@@ -37,22 +36,23 @@ B = {}
 
 sim_data = {}
 
-# # READ DATA AND CLACULATE PARAMETERS
+# # READ SIMULATION DATA AND CLACULATE PARAMETERS
 # # ---------------------------------------------------------------------------
 
 # SIMULATION DATA
 # Read all radial_data.csv files, making dictionary with key of simulation, containing;
 # a dictionary with key of each axial position, value of Dataframe for data
 
-for sim in sim_names:
+for idx, sim in enumerate(sim_names):
     sim_data.update({ sim : {} })
+    files = os.listdir(fr'{dir_home}\{sim_locs[idx]}')
     # Loop through all radial position of each simulation folder
     for filename in files:
         if filename[:11] == 'radial_data':
             cur_pos = filename[15:-4]
             all_pos.append(cur_pos)
             # Update DF to include data for current radial postion
-            sim_data[sim].update({ cur_pos : pd.read_csv(fr'{dir_home}\{sim_locs[0]}\{filename}') })
+            sim_data[sim].update({ cur_pos : pd.read_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}') })
             
             # Add normalized velocity data
             u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
@@ -67,7 +67,7 @@ for sim in sim_names:
                 sim_data[sim][cur_pos]['UNorm:0'] = Ux_norm
                 sim_data[sim][cur_pos]['UNorm:1'] = Uy_norm
                 sim_data[sim][cur_pos]['kNorm'] = tke_norm
-                sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[0]}\{filename}',index=False)
+                sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)
                 
             # Calculate jet flow parameters
             if 'U_secondary' not in sim_data[sim][cur_pos] and cur_pos != '0.0':
@@ -99,12 +99,12 @@ for sim in sim_names:
                 zeta = sim_data[sim][cur_pos]['Points:1'] / b
                 
 # Select what positions and variable to plot        
-xd_pos = np.linspace(15, 30, 7)
-r_dimless = sim_data['kw']['0.0']['Points:1']/np.max(sim_data['kw']['0.0']['Points:1'])
+xd_pos = np.linspace(15, 20, 3)
+r_dimless = sim_data['kwSST']['0.0']['Points:1']/np.max(sim_data['kwSST']['0.0']['Points:1'])
 sim_var = 'UMean:0'
 
-
-# # EXPERIMENTAL DATA
+# # LOAD EXPERIMENTAL DATA
+# # ---------------------------------------------------------------------------
 # Read data from pickled file
 with open('exp_data.pkl', 'rb') as file:
     exp_data = pickle.load(file)
@@ -112,7 +112,7 @@ with open('exp_data.pkl', 'rb') as file:
     
 # Use scale from raw exp to set and find xd locations
 scale = 0.3654
-exp_xd_ass = np.linspace(10, 19.75, 40);
+exp_xd_ass = xd_pos
 exp_x_loc= np.round( exp_xd_ass * (r_jet*2*1000) / scale );
 exp_var = 'u_centreline'
 
@@ -121,6 +121,7 @@ exp_var = 'u_centreline'
 # # ---------------------------------------------------------------------------
 
 # PLOT SETTINTGS
+plt_xd = np.linspace(15, 20, 3)
 legend = []
 plt.clf()
 # styles = plt.style.available
@@ -132,18 +133,25 @@ mpl.rcParams['font.family'] = 'book antiqua'
 
 # PLOT DATA
 fig, ax = plt.subplots()
+# Loop through radial poitions
 for pos in xd_pos:
-    ax.plot(r_dimless, sim_data['kw'][f'{pos}'][sim_var], linewidth=0.85)
-    legend.append('$x/D_{jet}$' + f' = {pos}')  
+    hold_color=next(ax._get_lines.prop_cycler)['color']
+    # Loop through simulations for that each
+    for sim in sim_names:
+        if sim == 'kwSST':
+            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_var], color=hold_color, linewidth=0.75)
+        else:
+            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_var], color=hold_color, linestyle='--', linewidth=0.9)
+        legend.append(fr'xd = {pos}     {sim}') 
 
 ax.grid(True, which='minor')
 # ax.set_xlim([0, 25])
 # ax.set_ylim([.25, 1])
-ax.set_ylabel('Velocity: $u_i$', fontsize=14, labelpad=15)
-# ax.yaxis.label.set(rotation='horizontal', ha='right');
+ax.set_ylabel('$\\frac{u_i}{u_{jet}}$', fontsize=18, labelpad=15)
+ax.yaxis.label.set(rotation='horizontal', ha='right');
 ax.set_xlabel('Radial Position: $r/R_{tube}$', fontsize=12, labelpad=10)
 ax.set_title('Radial Velocity Profile', fontsize=14, pad=12)
 ax.legend(legend,fontsize=10)
 
-fig.savefig('C:\\Users\\drewm\\Documents\\2.0 MSc\\2.0 Simulations\\Figures\\Python\\test.png',
+fig.savefig(r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\Figures\Python\PIV Compare\test.png',
         dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
