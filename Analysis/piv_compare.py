@@ -88,8 +88,12 @@ for idx, sim in enumerate(sim_names):
                 u_excess = sim_data[sim][cur_pos]['UMean:0'] - U_secondary[0]
                 u_excess_centreline = np.max(u_excess)
                 U_excess_centreline.update({ cur_pos : u_excess_centreline })
-                f_zeta = sim_data[sim][cur_pos]['UMean:0'] / u_excess_centreline
+                f_zeta = u_excess / u_excess_centreline
                 v_norm = sim_data[sim][cur_pos]['UMean:1'] / u_excess_centreline
+                sim_data[sim][cur_pos]['u_excess'] = u_excess
+                sim_data[sim][cur_pos]['u_excess_centreline'] = u_excess_centreline
+                sim_data[sim][cur_pos]['f_zeta'] = f_zeta
+                sim_data[sim][cur_pos]['v_norm'] = v_norm
                 
                 # Find half-width
                 b_velocity = u_excess_centreline / 2
@@ -97,11 +101,18 @@ for idx, sim in enumerate(sim_names):
                 b = sim_data[sim][cur_pos]['Points:1'][b_idx]
                 B.update({ cur_pos : b })
                 zeta = sim_data[sim][cur_pos]['Points:1'] / b
+                sim_data[sim][cur_pos]['b_idx'] = b_idx
+                sim_data[sim][cur_pos]['b'] = b
+                sim_data[sim][cur_pos]['zeta'] = zeta
+                
+                # Save calculated values
+                sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)
                 
 # Select what positions and variable to plot        
 xd_pos = np.linspace(15, 20, 3)
 r_dimless = sim_data['kwSST']['0.0']['Points:1']/np.max(sim_data['kwSST']['0.0']['Points:1'])
-sim_var = 'UMean:0'
+sim_var = 'f_zeta'
+y_var = 'zeta'
 
 # # LOAD EXPERIMENTAL DATA
 # # ---------------------------------------------------------------------------
@@ -113,15 +124,15 @@ with open('exp_data.pkl', 'rb') as file:
 # Use scale from raw exp to set and find xd locations
 scale = 0.3654
 exp_xd_ass = xd_pos
-exp_x_loc= np.round( exp_xd_ass * (r_jet*2*1000) / scale );
-exp_var = 'u_centreline'
+exp_x_loc= np.round( exp_xd_ass * (r_jet*2*1000) / scale )
+exp_var = 'f_zeta'
 
               
 # # PLOTTING
 # # ---------------------------------------------------------------------------
 
 # PLOT SETTINTGS
-plt_xd = np.linspace(15, 20, 3)
+plt_xd = xd_pos
 legend = []
 plt.clf()
 # styles = plt.style.available
@@ -134,18 +145,24 @@ mpl.rcParams['font.family'] = 'book antiqua'
 # PLOT DATA
 fig, ax = plt.subplots()
 # Loop through radial poitions
-for pos in xd_pos:
+for idx, pos in enumerate(plt_xd):
     hold_color=next(ax._get_lines.prop_cycler)['color']
+    ax.plot(exp_data[y_var][:,int(exp_x_loc[idx])], exp_data[exp_var][:,int(exp_x_loc[idx])], color=hold_color, linewidth=0.9)
+    legend.append(fr'xd = {pos}     PIV Experiment') 
     # Loop through simulations for that each
     for sim in sim_names:
         if sim == 'kwSST':
-            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_var], color=hold_color, linewidth=0.75)
+            ax.plot(sim_data[sim][f'{pos}'][y_var], sim_data[sim][f'{pos}'][sim_var],
+                    markerfacecolor=hold_color, alpha=0.6, marker='^', 
+                    markersize=4, markevery=50, linestyle='')
         else:
-            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_var], color=hold_color, linestyle='--', linewidth=0.9)
+            ax.plot(sim_data[sim][f'{pos}'][y_var], sim_data[sim][f'{pos}'][sim_var],
+                    markerfacecolor=hold_color, alpha=0.6, marker='s', 
+                    markersize=4, markevery=50, linestyle='')
         legend.append(fr'xd = {pos}     {sim}') 
 
 ax.grid(True, which='minor')
-# ax.set_xlim([0, 25])
+ax.set_xlim([0, 3])
 # ax.set_ylim([.25, 1])
 ax.set_ylabel('$\\frac{u_i}{u_{jet}}$', fontsize=18, labelpad=15)
 ax.yaxis.label.set(rotation='horizontal', ha='right');
