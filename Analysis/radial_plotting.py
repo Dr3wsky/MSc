@@ -59,9 +59,9 @@ for idx, sim in enumerate(sim_names):
                 ## Add r and theta calcs for points and velocities, from axial calcs
                 
 # Select what positions and variable to plot        
-xd_pos = np.linspace(20, 30, 5)
+xd_pos = np.linspace(12.5, 17.5, 3)
 r_dimless = sim_data['kw']['0.0']['Points:1'] / np.max(sim_data['kw']['0.0']['Points:1'])
-sim_var = 'UMean:0'
+sim_var = 'UNorm:0'
 
 # # PLOTTING
 # # ---------------------------------------------------------------------------
@@ -78,19 +78,26 @@ mpl.rcParams['font.family'] = 'book antiqua'
 
 # PLOT DATA
 fig, ax = plt.subplots()
+# Loop through each axial position
 for pos in xd_pos:
-    ax.plot(r_dimless, sim_data[f'{pos}'][sim_var], linewidth=0.75)
-    legend.append(f'xd = {pos}')  
+    hold_color=next(ax._get_lines.prop_cycler)['color']
+    # Loop through simulations for that position
+    for sim in sim_names:
+        if sim == 'kw':
+            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_var], color=hold_color, linewidth=0.75)
+        else:
+            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_var], color=hold_color, linestyle='--', linewidth=0.9)
+        legend.append(fr'xd = {pos}     {sim}')  
 
 ax.grid(True, which='minor')
 # ax.set_xlim([0, 25])
 # ax.set_ylim([.25, 1])
-ax.set_ylabel('Velocity: $u_i$', fontsize=14, labelpad=15)
+ax.set_ylabel('Axial Velocity: $\\frac{u_i}{u_jet}$', fontsize=14, labelpad=15)
 # ax.yaxis.label.set(rotation='horizontal', ha='right');
 ax.set_xlabel('Radial Position: $r/R_{tube}$', fontsize=12, labelpad=10)
-ax.set_title('Radial Velocity Profile', fontsize=14, pad=12)
+ax.set_title('Radial Velocity Profiles', fontsize=14, pad=12)
 ax.legend(legend,fontsize=10)
 
-fig.savefig(r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\Figures\Python\Radial Iso\Ux_M4_raw.png',
+fig.savefig(r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\Figures\Python\Radial Iso\test.png',
         dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
 
