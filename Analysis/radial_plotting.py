@@ -27,33 +27,40 @@ import matplotlib as mpl
 # # ---------------------------------------------------------------------------
 
 dir_home = r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations'
-sim_locs = ['PIV_JetSim_M4']
-sim_names = ['M4']
-files = os.listdir(fr'{dir_home}\{sim_locs[0]}')
+sim_locs = ['PIV_JetSim_M4', 'kOmegaSSTdd_PIV_JetSim_M4']
+sim_names = ['kw', 'kwSSTdd']
 all_pos = []
 
 sim_data = {}
-    
-for filename in files:
-    if filename[:11] == 'radial_data':
-        cur_pos = filename[15:-4]
-        all_pos.append(cur_pos)
-        sim_data.update({ cur_pos : pd.read_csv(fr'{dir_home}\{sim_locs[0]}\{filename}') })
-        # # Add normalized data for simulation outputs. Will calculate excess,half-width, etc in other scripts. 
-        if 'UNorm:0' not in sim_data[cur_pos]:
-            u_jet = np.max(sim_data[cur_pos]['UMean:0'])
-            Ux_norm = sim_data[cur_pos]['UMean:0'] / u_jet 
-            Uy_norm = sim_data[cur_pos]['UMean:1'] / u_jet
-            tke_norm = sim_data[cur_pos]['kMean']/ u_jet**2
-            sim_data[cur_pos]['UNorm:0'] = Ux_norm
-            sim_data[cur_pos]['UNorm:1'] = Uy_norm
-            sim_data[cur_pos]['kNorm'] = tke_norm
-            sim_data[cur_pos].to_csv(fr'{dir_home}{sim_locs[0]}\{filename}',index=False)
-## Add r and theta calcs for points and velocities, from axial calcs
 
+# Read all radial_data.csv files, making dictionary with key of simulation, containing;
+# a dictionary with key of each axial position, value of Dataframe for data
+
+for idx, sim in enumerate(sim_names):
+    sim_data.update({ sim : {} })
+    files = os.listdir(fr'{dir_home}\{sim_locs[idx]}')
+    # Loop through all radial position of each simulation folder    
+    for filename in files:
+        if filename[:11] == 'radial_data':
+            cur_pos = filename[15:-4]
+            if cur_pos not in all_pos:
+                all_pos.append(cur_pos)
+            sim_data[sim].update({ cur_pos : pd.read_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}') })
+            # # Add normalized data for simulation outputs. Will calculate excess,half-width, etc in other scripts. 
+            if 'UNorm:0' not in sim_data[sim][cur_pos]:
+                u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
+                Ux_norm = sim_data[sim][cur_pos]['UMean:0'] / u_jet 
+                Uy_norm = sim_data[sim][cur_pos]['UMean:1'] / u_jet
+                tke_norm = sim_data[sim][cur_pos]['kMean']/ u_jet**2
+                sim_data[sim][cur_pos]['UNorm:0'] = Ux_norm
+                sim_data[sim][cur_pos]['UNorm:1'] = Uy_norm
+                sim_data[sim][cur_pos]['kNorm'] = tke_norm
+                sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)
+                ## Add r and theta calcs for points and velocities, from axial calcs
+                
 # Select what positions and variable to plot        
 xd_pos = np.linspace(20, 30, 5)
-r_dimless = sim_data['0.0']['Points:1'] / np.max(sim_data['0.0']['Points:1'])
+r_dimless = sim_data['kw']['0.0']['Points:1'] / np.max(sim_data['kw']['0.0']['Points:1'])
 sim_var = 'UMean:0'
 
 # # PLOTTING
