@@ -28,7 +28,7 @@ sim_locs = ['PIV_JetSim_M4', 'kOmegaSSTdd_PIV_JetSim_M4']
 sim_names = ['kwSST', 'kwSSTdd']
 all_pos = []
 r_tube = 0.025396
-r_jet = 0.0032;
+r_jet = 0.003175;
 U_2 = {}
 U_jet = {}
 U_excess_centreline = {}
@@ -111,8 +111,8 @@ for idx, sim in enumerate(sim_names):
 # Select what positions and variable to plot        
 xd_pos = np.linspace(15, 20, 3)
 r_dimless = sim_data['kwSST']['0.0']['Points:1']/np.max(sim_data['kwSST']['0.0']['Points:1'])
-sim_var = 'f_zeta'
-y_var = 'zeta'
+sim_x_var = 'zeta'
+sim_y_var = 'f_zeta'
 
 # # LOAD EXPERIMENTAL DATA
 # # ---------------------------------------------------------------------------
@@ -122,17 +122,19 @@ with open('exp_data.pkl', 'rb') as file:
     file.close()  
     
 # Use scale from raw exp to set and find xd locations
-scale = 0.3654
+scale = exp_data['x'][0][1] - exp_data['x'][0][0]
 exp_xd_ass = xd_pos
 exp_x_loc= np.round( exp_xd_ass * (r_jet*2*1000) / scale )
-exp_var = 'f_zeta'
+exp_x_var = 'zeta'
+exp_y_var = 'f_zeta'
+
 
               
 # # PLOTTING
 # # ---------------------------------------------------------------------------
 
 # PLOT SETTINTGS
-plt_xd = xd_pos
+plt_xd =[17.5]
 legend = []
 plt.clf()
 # styles = plt.style.available
@@ -146,28 +148,32 @@ mpl.rcParams['font.family'] = 'book antiqua'
 fig, ax = plt.subplots()
 # Loop through radial poitions
 for idx, pos in enumerate(plt_xd):
-    hold_color=next(ax._get_lines.prop_cycler)['color']
-    ax.plot(exp_data[y_var][:,int(exp_x_loc[idx])], exp_data[exp_var][:,int(exp_x_loc[idx])], color=hold_color, linewidth=0.9)
+    # hold_color=next(ax._get_lines.prop_cycler)['color']
+    cur_color = next(ax._get_lines.prop_cycler)['color']
+    
+    # plot experimental data
+    ax.plot(exp_data[exp_x_var][:,int(exp_x_loc[idx])], exp_data[exp_y_var][:,int(exp_x_loc[idx])],
+            marker='o', linestyle='', markeredgewidth=1,
+            alpha=0.75, markerfacecolor='none', markeredgecolor=cur_color,  
+            markersize=6)
     legend.append(fr'xd = {pos}     PIV Experiment') 
-    # Loop through simulations for that each
+    # Loop through simulations alnd plot each
     for sim in sim_names:
         if sim == 'kwSST':
-            ax.plot(sim_data[sim][f'{pos}'][y_var], sim_data[sim][f'{pos}'][sim_var],
-                    markerfacecolor=hold_color, alpha=0.6, marker='^', 
-                    markersize=4, markevery=50, linestyle='')
+            ax.plot(sim_data[sim][f'{pos}'][sim_x_var], sim_data[sim][f'{pos}'][sim_y_var],
+                    color='black', alpha=0.65, linewidth=1)
         else:
-            ax.plot(sim_data[sim][f'{pos}'][y_var], sim_data[sim][f'{pos}'][sim_var],
-                    markerfacecolor=hold_color, alpha=0.6, marker='s', 
-                    markersize=4, markevery=50, linestyle='')
+            ax.plot(sim_data[sim][f'{pos}'][sim_x_var], sim_data[sim][f'{pos}'][sim_y_var],
+                    color=cur_color, linestyle='--', linewidth=1.25)
         legend.append(fr'xd = {pos}     {sim}') 
 
 ax.grid(True, which='minor')
-ax.set_xlim([0, 3])
+ax.set_xlim([0, 2])
 # ax.set_ylim([.25, 1])
-ax.set_ylabel('$\\frac{u_i}{u_{jet}}$', fontsize=18, labelpad=15)
+ax.set_ylabel('$\\frac{\\overline{U}}{\\overline{U}_m}$', fontsize=16, labelpad=15)
 ax.yaxis.label.set(rotation='horizontal', ha='right');
-ax.set_xlabel('Radial Position: $r/R_{tube}$', fontsize=12, labelpad=10)
-ax.set_title('Radial Velocity Profile', fontsize=14, pad=12)
+ax.set_xlabel('$\\eta = \\frac{r}{b}$', fontsize=16, labelpad=10)
+ax.set_title('Normalized Excess Velocity Profile', fontsize=14, pad=12)
 ax.legend(legend,fontsize=10)
 
 fig.savefig(r'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\Figures\Python\PIV Compare\test.png',
