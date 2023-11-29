@@ -28,7 +28,8 @@ sim_locs = ['PIV_JetSim_M4', 'kOmegaSSTdd_PIV_JetSim_M4']
 sim_names = ['kwSST', 'kwSSTdd']
 all_pos = []
 r_tube = 0.025396
-r_jet = 0.003175;
+# r_jet = 0.003175;
+r_jet = 0.0032
 U2 = {}
 U_jet = {}
 U_excess_jet = {}
@@ -118,12 +119,22 @@ for idx, sim in enumerate(sim_names):
             
             # if 'b_prime' not in sim_data[sim][cur_pos]:
             #     # How to calc b_prime??
-                
+
+# Re-order all_pos for b_prime calcs
+all_pos = sorted(set(all_pos))
+
 # Select what positions and variable to plot        
 xd_pos = np.linspace(10, 25, 7)
 r_dimless = sim_data['kwSST']['0.0']['Points:1']/np.max(sim_data['kwSST']['0.0']['Points:1'])
 sim_x_var = ''
 sim_y_var = 'turbulenceProperties:R:3'
+
+# Sample b_prime calcs
+b_prime = {}
+for idx, pos in enumerate(all_pos):
+    prev_pos = all_pos[idx-1]
+    if idx != 0:
+        b_prime = (B[pos] - B[prev_pos]) / ((all_pos[idx] - prev_pos) * 2 * r_jet) 
 
 # # LOAD EXPERIMENTAL DATA
 # # ---------------------------------------------------------------------------
