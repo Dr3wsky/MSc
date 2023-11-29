@@ -34,7 +34,7 @@ U2 = {}
 U_jet = {}
 U_excess_jet = {}
 B = {}
-B_prime = {}
+Rs_max_norm = {}
 sim_data = {}
 
 R_stress_legend = ["Rxx", "Ryy", "Rzz", "Rxy", "Ryz", "Rxz"];
@@ -49,6 +49,11 @@ UPrime_2_Mean_legend = ["UPrime2Mean_xx", "UPrime2Mean_xy", "UPrime2Mean_xz", "U
 
 for idx, sim in enumerate(sim_names):
     sim_data.update({ sim : {} })
+    U_jet.update({ sim : {} })
+    U2.update({ sim : {} })
+    U_excess_jet.update({ sim : {} })
+    B.update({ sim : {} })
+    Rs_max_norm.update({ sim : {} })
     files = os.listdir(fr'{dir_home}\{sim_locs[idx]}')
     # Loop through all radial position of each simulation folder
     for filename in files:
@@ -60,12 +65,12 @@ for idx, sim in enumerate(sim_names):
             r_dimless = sim_data[sim][cur_pos]['Points:1'] / np.max(sim_data[sim][cur_pos]['Points:1']) 
             
             # Make key dictionarys for quick debugging if vars already calculated
-            if 'b' in sim_data[sim][cur_pos]:
-                u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
-                U_jet.update({ cur_pos : u_jet })
-                U2.update({ cur_pos : sim_data[sim][cur_pos]['U_secondary'][0] })
-                U_excess_jet.update({ cur_pos : sim_data[sim][cur_pos]['u_excess_centreline'][0] })
-                B.update({ cur_pos : sim_data[sim][cur_pos]['b'][0] })
+            u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
+            # U_jet[sim].update({ cur_pos : u_jet })
+            # U2[sim].update({ cur_pos : sim_data[sim][cur_pos]['U_secondary'][0] })
+            # U_excess_jet[sim].update({ cur_pos : sim_data[sim][cumax_norm[sim].update({ cur_pos : sim_datr_pos]['u_excess_centreline'][0] })
+            # B[sim].update({ cur_pos : sim_data[sim][cur_pos]['b'][0] })
+            # Rs_a[sim][cur_pos]['Rs_max_norm'][0] })
                 
             # Add normalized velocity data
             if 'UNorm:0' not in sim_data[sim][cur_pos]:
@@ -89,12 +94,12 @@ for idx, sim in enumerate(sim_names):
                 U_secondary = bins[bin_idx[0]]
                 # plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=250, edgecolor='black')
                 # plt.show()
-                U2.update({ cur_pos : U_secondary[0] })
+                # U2.update({ cur_pos : U_secondary[0] })
                 sim_data[sim][cur_pos]['U_secondary'] = U_secondary[0]
                 # Calculate excess velocities and normalize
                 u_excess = sim_data[sim][cur_pos]['UMean:0'] - U_secondary[0]
                 u_excess_centreline = np.max(u_excess)
-                U_excess_jet.update({ cur_pos : u_excess_centreline })
+                # U_excess_jet.update({ cur_pos : u_excess_centreline })
                 f_zeta = u_excess / u_excess_centreline
                 v_norm = sim_data[sim][cur_pos]['UMean:1'] / u_excess_centreline
                 sim_data[sim][cur_pos]['u_excess'] = u_excess
@@ -106,20 +111,32 @@ for idx, sim in enumerate(sim_names):
                 b_velocity = u_excess_centreline / 2
                 b_idx = np.where(u_excess < b_velocity)[0][0]
                 b = sim_data[sim][cur_pos]['Points:1'][b_idx]
-                B.update({ cur_pos : b })
+                # B.update({ cur_pos : b })
                 zeta = sim_data[sim][cur_pos]['Points:1'] / b
                 sim_data[sim][cur_pos]['b_idx'] = b_idx
                 sim_data[sim][cur_pos]['b'] = b
                 sim_data[sim][cur_pos]['zeta'] = zeta
-                
                 # Save calculated values
                 sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)
+              
+            # Normalize Reynolds Stresses with U_excess_jet     
+            if 'RxxNorm' not in sim_data[sim][cur_pos]:
+                RxxNorm = sim_data[sim][cur_pos]['turbulenceProperties:R:0'] / U_excess_jet[sim][cur_pos]^2
+                RyyNorm = sim_data[sim][cur_pos]['turbulenceProperties:R:1'] / U_excess_jet[sim][cur_pos]^2
+                RxyNorm = sim_data[sim][cur_pos]['turbulenceProperties:R:3'] / U_excess_jet[sim][cur_pos]^2
+                Rs_max = np.max(sim_data[sim][cur_pos]['turbulenceProperties:R:3'])
+                Rs_max_norm= Rs_max / U_excess_jet[sim][cur_pos]^2
+                sim_data[sim][cur_pos]['RxxNorm'] = RxxNorm
+                sim_data[sim][cur_pos]['RyyNorm'] = RyyNorm
+                sim_data[sim][cur_pos]['RxyNorm'] = RxyNorm
+                sim_data[sim][cur_pos]['Rs_max_norm'] = Rs_max_norm
+                sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)
                 
-            # if 'RxxNorm' not in sim_data[sim][cur_pos]:
-            #     # How to normalize??!!
+                
+
+                
+                
             
-            # if 'b_prime' not in sim_data[sim][cur_pos]:
-            #     # How to calc b_prime??
 
 # Re-order all_pos
 all_pos = sorted(set([np.round(float(pos), 4) for pos in all_pos]))
