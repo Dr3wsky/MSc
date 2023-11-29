@@ -34,6 +34,7 @@ U2 = {}
 U_jet = {}
 U_excess_jet = {}
 B = {}
+B_prime = {}
 sim_data = {}
 
 R_stress_legend = ["Rxx", "Ryy", "Rzz", "Rxy", "Ryz", "Rxz"];
@@ -120,8 +121,8 @@ for idx, sim in enumerate(sim_names):
             # if 'b_prime' not in sim_data[sim][cur_pos]:
             #     # How to calc b_prime??
 
-# Re-order all_pos for b_prime calcs
-all_pos = sorted(set(all_pos))
+# Re-order all_pos
+all_pos = sorted(set([np.round(float(pos), 4) for pos in all_pos]))
 
 # Select what positions and variable to plot        
 xd_pos = np.linspace(10, 25, 7)
@@ -129,12 +130,6 @@ r_dimless = sim_data['kwSST']['0.0']['Points:1']/np.max(sim_data['kwSST']['0.0']
 sim_x_var = ''
 sim_y_var = 'turbulenceProperties:R:3'
 
-# Sample b_prime calcs
-b_prime = {}
-for idx, pos in enumerate(all_pos):
-    prev_pos = all_pos[idx-1]
-    if idx != 0:
-        b_prime = (B[pos] - B[prev_pos]) / ((all_pos[idx] - prev_pos) * 2 * r_jet) 
 
 # # LOAD EXPERIMENTAL DATA
 # # ---------------------------------------------------------------------------
