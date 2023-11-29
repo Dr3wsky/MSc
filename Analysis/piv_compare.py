@@ -29,12 +29,14 @@ sim_names = ['kwSST', 'kwSSTdd']
 all_pos = []
 r_tube = 0.025396
 r_jet = 0.003175;
-U_2 = {}
+U2 = {}
 U_jet = {}
-U_excess_centreline = {}
+U_excess_jet = {}
 B = {}
-
 sim_data = {}
+
+R_stress_legend = ["Rxx", "Ryy", "Rzz", "Rxy", "Ryz", "Rxz"];
+UPrime_2_Mean_legend = ["UPrime2Mean_xx", "UPrime2Mean_xy", "UPrime2Mean_xz", "UPrime2Mean_yy", "UPrime2Mean_yz", "UPrime2Mean_zz"];
 
 # # READ SIMULATION DATA AND CLACULATE PARAMETERS
 # # ---------------------------------------------------------------------------
@@ -53,12 +55,17 @@ for idx, sim in enumerate(sim_names):
             all_pos.append(cur_pos)
             # Update DF to include data for current radial postion
             sim_data[sim].update({ cur_pos : pd.read_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}') })
+            r_dimless = sim_data[sim][cur_pos]['Points:1'] / np.max(sim_data[sim][cur_pos]['Points:1']) 
             
+            # Make key dictionarys for quick debugging if vars already calculated
+            if 'b' in sim_data[sim][cur_pos]:
+                u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
+                U_jet.update({ cur_pos : u_jet })
+                U2.update({ cur_pos : sim_data[sim][cur_pos]['U_secondary'][0] })
+                U_excess_jet.update({ cur_pos : sim_data[sim][cur_pos]['u_excess_centreline'][0] })
+                B.update({ cur_pos : sim_data[sim][cur_pos]['b'][0] })
+                
             # Add normalized velocity data
-            u_jet = np.max(sim_data[sim][cur_pos]['UMean:0'])
-            U_jet.update({ cur_pos : u_jet })
-            r_dimless = sim_data[sim][cur_pos]['Points:1'] / r_tube
-            
             if 'UNorm:0' not in sim_data[sim][cur_pos]:
                 Ux_norm = sim_data[sim][cur_pos]['UMean:0'] / u_jet 
                 Uy_norm = sim_data[sim][cur_pos]['UMean:1']/ u_jet
@@ -74,20 +81,18 @@ for idx, sim in enumerate(sim_names):
                 # Trim the wall effects and jet flow
                 y_trim_start = np.where(r_dimless > 0.15)[0][0]
                 y_trim_end = np.where(r_dimless < 0.9)[0][-1]
-                
                 # Use histogram to find common velocity for secondary stream
                 hist, bins = np.histogram(sim_data[sim][cur_pos]['UMean:0'][y_trim_start:y_trim_end], bins=250) 
                 bin_idx = np.where(hist == np.max(hist[:90]))
                 U_secondary = bins[bin_idx[0]]
                 # plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=250, edgecolor='black')
                 # plt.show()
-                U_2.update({ cur_pos : U_secondary[0] })
+                U2.update({ cur_pos : U_secondary[0] })
                 sim_data[sim][cur_pos]['U_secondary'] = U_secondary[0]
-                
                 # Calculate excess velocities and normalize
                 u_excess = sim_data[sim][cur_pos]['UMean:0'] - U_secondary[0]
                 u_excess_centreline = np.max(u_excess)
-                U_excess_centreline.update({ cur_pos : u_excess_centreline })
+                U_excess_jet.update({ cur_pos : u_excess_centreline })
                 f_zeta = u_excess / u_excess_centreline
                 v_norm = sim_data[sim][cur_pos]['UMean:1'] / u_excess_centreline
                 sim_data[sim][cur_pos]['u_excess'] = u_excess
@@ -108,11 +113,17 @@ for idx, sim in enumerate(sim_names):
                 # Save calculated values
                 sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)
                 
+            # if 'RxxNorm' not in sim_data[sim][cur_pos]:
+            #     # How to normalize??!!
+            
+            # if 'b_prime' not in sim_data[sim][cur_pos]:
+            #     # How to calc b_prime??
+                
 # Select what positions and variable to plot        
-xd_pos = np.linspace(15, 20, 3)
+xd_pos = np.linspace(10, 25, 7)
 r_dimless = sim_data['kwSST']['0.0']['Points:1']/np.max(sim_data['kwSST']['0.0']['Points:1'])
-sim_x_var = 'zeta'
-sim_y_var = 'f_zeta'
+sim_x_var = ''
+sim_y_var = 'turbulenceProperties:R:3'
 
 # # LOAD EXPERIMENTAL DATA
 # # ---------------------------------------------------------------------------
@@ -125,21 +136,19 @@ with open('exp_data.pkl', 'rb') as file:
 scale = exp_data['x'][0][1] - exp_data['x'][0][0]
 exp_xd_ass = xd_pos
 exp_x_loc= np.round( exp_xd_ass * (r_jet*2*1000) / scale )
-exp_x_var = 'zeta'
-exp_y_var = 'f_zeta'
+exp_x_var = 'r_norm'
+exp_y_var = 'Rxy'
 
 
               
 # # PLOTTING
 # # ---------------------------------------------------------------------------
 
-# PLOT SETTINTGS
-plt_xd =[12.5, 15.0, 17.5]
-legend = []
+# PLOT SETTINTG
 # styles = plt.style.available
 # print(styles)
 bright = sns.set_palette(sns.color_palette("bright"))
-plt.style.use('seaborn-v0_8-bright')
+plt.style.use('seaborn-v0_8')
 plt.figure(dpi=1000)
 mpl.rcParams['font.family'] = 'book antiqua'
 # cur_color = next(ax._get_lines.prop_cycler)['color']
@@ -149,11 +158,13 @@ mpl.rcParams['font.family'] = 'book antiqua'
 
 # PLOT DATA
 # Loop through radial poitions
-fig, ax = plt.subplots()
-color = ['blue', 'green', 'magenta']
-mark = ['o', 's', '^']
+color = ['blue', 'green', 'magenta', 'red', 'purple', 'orange', 'teal']
+mark = ['o', 's', '^', '<', '>', 'D', 'p']
 
-for idx, pos in enumerate(plt_xd):    
+for idx, pos in enumerate(xd_pos):
+    plt.clf()
+    legend = []    
+    fig, ax = plt.subplots()
     # Plot experimental data
     ax.plot(exp_data[exp_x_var][:,int(exp_x_loc[idx])], exp_data[exp_y_var][:,int(exp_x_loc[idx])],
             marker=mark[idx], linestyle='', markeredgewidth=1,
@@ -164,25 +175,24 @@ for idx, pos in enumerate(plt_xd):
     # Loop through simulations alnd plot each
     for sim in sim_names:
         if sim == 'kwSST':
-            ax.plot(sim_data[sim][f'{pos}'][sim_x_var], sim_data[sim][f'{pos}'][sim_y_var],
-                    color=color[idx], alpha=0.65, linewidth=1)
+            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_y_var],
+                    color='black', alpha=0.75, linewidth=1, linestyle='--')
         else:
-            ax.plot(sim_data[sim][f'{pos}'][sim_x_var], sim_data[sim][f'{pos}'][sim_y_var],
-                    marker=mark[idx], linestyle='', markeredgewidth=1, markeredgecolor='black',
-                    alpha=0.75, markerfacecolor=color[idx], markersize=6, markevery=30)
+            ax.plot(r_dimless, sim_data[sim][f'{pos}'][sim_y_var],
+                    color=color[idx], alpha=0.85, linewidth=1)
         legend.append(fr'xd = {pos}     {sim}') 
 
     # Plot rendering
-ax.grid(True, which='minor')
-ax.set_xlim([0, 2])
-ax.set_ylim([0, 1])
-ax.set_ylabel('$\\frac{\\overline{U}}{\\overline{U}_m}$', fontsize=16, labelpad=15)
-ax.yaxis.label.set(rotation='horizontal', ha='right');
-ax.set_xlabel('$\\eta = \\frac{r}{b}$', fontsize=16, labelpad=10)
-ax.set_title('Normalized Excess Velocity Profile', fontsize=14, pad=12)
-ax.legend(legend,fontsize=10)
+    ax.grid(True, which='minor')
+    ax.set_xlim([0, 1])
+    ax.set_ylim([-25, 1250])
+    ax.set_ylabel('$R_{xy}$     \n[$m^2/s^2$]', fontsize=16, labelpad=15)
+    ax.yaxis.label.set(rotation='horizontal', ha='right');
+    ax.set_xlabel('$r/R_{tube}$', fontsize=16, labelpad=10)
+    ax.set_title('Reynolds Shear Stress Profile', fontsize=14, pad=12)
+    ax.legend(legend,fontsize=10)
 
-plt.show()
+    plt.show()
 
-fig.savefig(fr'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\Figures\Python\PIV Compare\UexcessNorm_xd12.5-17.5_kOmegaSSTdd_PIV.png',
+    fig.savefig(fr'C:\Users\drewm\Documents\2.0 MSc\2.0 Simulations\Figures\Python\PIV Compare\Rxy_xd{pos:.3}_PIV.png',
                 dpi=1000 ,bbox_inches='tight', pad_inches=0.15)
