@@ -97,6 +97,7 @@ for idx, sim in enumerate(sim_names):
                 # plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=250, edgecolor='black')
                 # plt.show()
                 sim_data[sim][cur_pos]['U_secondary'] = U_secondary[0]
+                sim_data[sim][cur_pos]['U_secondary_idx'] = bin_idx
                 # Calculate excess velocities and normalize
                 u_excess = sim_data[sim][cur_pos]['UMean:0'] - U_secondary[0]
                 u_excess_centreline = np.max(u_excess)
@@ -133,8 +134,22 @@ for idx, sim in enumerate(sim_names):
                 sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)
             
             if 'Mach_conv' not in sim_data[sim][cur_pos] and sim != 'kwSST' and cur_pos != '0.0':
-                test = 'hold'
+                # Speed of sound
+                a1_idx = np.where(sim_data[sim][cur_pos]['UMean:0'] == U_jet[sim][cur_pos])[0][0]
+                a1 = U_jet[sim][cur_pos] / sim_data[sim][cur_pos]['Ma'][a1_idx]
+                a2_idx = np.where(sim_data[sim][cur_pos]['UMean:0'] == U2[sim][cur_pos])[0][0]
+                a2 = U2[sim][cur_pos] / sim_data[sim][cur_pos]['Ma'][a2_idx]
                 
+                # Convective terms
+                U_conv = (a1*U_jet[sim][cur_pos] + a2*U2[sim][cur_pos]) / (a1 + a2)
+                Mc_jet = (U_jet[sim][cur_pos]-U_conv) / a1
+                Mc_secondary = (U_conv - U2[sim][cur_pos]) / a2
+                M_conv = np.sqrt(Mc_jet*Mc_secondary)
+                
+                # Save calculated values
+                sim_data[sim][cur_pos]['U_conv'] = U_conv
+                sim_data[sim][cur_pos]['Ma_conv'] = M_conv
+                sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)                
 
 # Re-order all_pos
 all_pos = sorted(set([np.round(float(pos), 4) for pos in all_pos]))
