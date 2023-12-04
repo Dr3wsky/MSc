@@ -151,8 +151,8 @@ for idx, sim in enumerate(sim_names):
                 sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)                
 
 # Calculate experimental fits
-Mc = np.linspace(0, 1, num=100)
-phi_Mc = 0.8 * np.exp(-3 * Mc**2 ) + 0.2
+Mc_unity = np.linspace(0, 1, num=100)
+phi_Mc_unity = 0.8 * np.exp(-3 * Mc_unity**2 ) + 0.2
 
 # Re-order all_pos
 all_pos = sorted(set([np.round(float(pos), 4) for pos in all_pos]))
