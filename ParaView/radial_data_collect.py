@@ -31,7 +31,7 @@ UpdatePipeline(time=end_time, proxy=plotOverLine1)
 
 # save data
 SaveData('C:/Users/drewm/Documents/2.0 MSc/2.0 Simulations/' + sim + '/radial_data_xd_' + str(x_d) + '.csv', proxy=plotOverLine1, ChooseArraysToWrite=1,
-    PointDataArrays=['Ma', 'R', 'RMean', 'T', 'TMean', 'TPrime2Mean', 'U', 'UMean', 'UPrime2Mean', 'alphat', 'epsilon', 'k', 'kMean', 'kPrime2Mean', 'nut', 'nutMean', 'nutPrime2Mean', 'p', 'pMean', 'pPrime2Mean', 'rho', 'rhoMean', 'rhoPrime2Mean', 'turbulenceProperties:R', 'turbulenceProperties:omega'])
+    PointDataArrays=['Ma', 'MaT', 'kappa', 'R', 'RMean', 'T', 'TMean', 'TPrime2Mean', 'U', 'UMean', 'UPrime2Mean', 'alphat', 'epsilon', 'k', 'kMean', 'kPrime2Mean', 'nut', 'nutMean', 'nutPrime2Mean', 'p', 'pMean', 'pPrime2Mean', 'rho', 'rhoMean', 'rhoPrime2Mean', 'turbulenceProperties:R', 'turbulenceProperties:omega'])
 
 # set active source
 SetActiveSource(pIVfoam)
