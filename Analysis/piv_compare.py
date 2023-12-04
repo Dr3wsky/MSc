@@ -97,7 +97,6 @@ for idx, sim in enumerate(sim_names):
                 # plt.hist(sim_data[sim][cur_pos]['UMean:0'][:y_trim_end], bins=250, edgecolor='black')
                 # plt.show()
                 sim_data[sim][cur_pos]['U_secondary'] = U_secondary[0]
-                sim_data[sim][cur_pos]['U_secondary_idx'] = bin_idx
                 # Calculate excess velocities and normalize
                 u_excess = sim_data[sim][cur_pos]['UMean:0'] - U_secondary[0]
                 u_excess_centreline = np.max(u_excess)
@@ -137,7 +136,7 @@ for idx, sim in enumerate(sim_names):
                 # Speed of sound
                 a1_idx = np.where(sim_data[sim][cur_pos]['UMean:0'] == U_jet[sim][cur_pos])[0][0]
                 a1 = U_jet[sim][cur_pos] / sim_data[sim][cur_pos]['Ma'][a1_idx]
-                a2_idx = np.where(sim_data[sim][cur_pos]['UMean:0'] == U2[sim][cur_pos])[0][0]
+                a2_idx = np.where(np.isclose(sim_data[sim][cur_pos]['UMean:0'], U2[sim][cur_pos], atol=0.25))[0][0]
                 a2 = U2[sim][cur_pos] / sim_data[sim][cur_pos]['Ma'][a2_idx]
                 
                 # Convective terms
@@ -150,6 +149,10 @@ for idx, sim in enumerate(sim_names):
                 sim_data[sim][cur_pos]['U_conv'] = U_conv
                 sim_data[sim][cur_pos]['Ma_conv'] = M_conv
                 sim_data[sim][cur_pos].to_csv(fr'{dir_home}\{sim_locs[idx]}\{filename}',index=False)                
+
+# Calculate experimental fits
+Mc = np.linspace(0, 1, num=100)
+phi_Mc = 0.8 * np.exp(-3 * Mc**2 ) + 0.2
 
 # Re-order all_pos
 all_pos = sorted(set([np.round(float(pos), 4) for pos in all_pos]))
