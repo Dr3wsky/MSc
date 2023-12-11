@@ -115,7 +115,6 @@ SeeAlso
 #include "RASModel.H"
 #include "eddyViscosity.H"
 #include "fvCFD.H"                     //
-#include "psiThermo.H"                 //
 #include "turbulentFluidThermoModel.H" //
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -135,9 +134,6 @@ namespace Foam
         {
             // Turbulent Mach No, used for turbulence model modification
             volScalarField MachTurb_;
-
-            // // Turublent Mach No squared in func to help with calcs
-            // volScalarField MachTurbSq_;
 
             // Gamma (specific heat ratio), output for verification/testing
             volScalarField gammaThermo_;

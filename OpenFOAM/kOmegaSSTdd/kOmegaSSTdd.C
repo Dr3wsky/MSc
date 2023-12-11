@@ -86,15 +86,6 @@ namespace Foam
                       IOobject::AUTO_WRITE),
                   this->mesh(),
                   dimensionedScalar(dimless, Zero)),
-              //   MachTurbSq_(
-              //       IOobject(
-              //           "MachTurb",
-              //           this->mesh().time().timeName(),
-              //           this->mesh(),
-              //           IOobject::NO_READ,
-              //           IOobject::NO_WRITE),
-              //       this->mesh(),
-              //       dimensionedScalar(dimless, Zero)),
               gammaThermo_(
                   IOobject(
                       "gammaThermo",
@@ -118,8 +109,7 @@ namespace Foam
         {
             const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
             gammaThermo_ = thermo.gamma();
-            MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);
-        }
+            MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);        }
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
         template <class BasicTurbulenceModel>
