@@ -114,9 +114,8 @@ SeeAlso
 #include "kOmegaSSTBase.H"
 #include "RASModel.H"
 #include "eddyViscosity.H"
-#include "fvCFD.H"                     //
-#include "psiThermo.H"                 //
-#include "turbulentFluidThermoModel.H" //
+#include "fvCFD.H"                     
+#include "turbulentFluidThermoModel.H" 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -135,9 +134,11 @@ namespace Foam
         {
             // Turbulent Mach No, used for turbulence model modification
             volScalarField MachTurb_;
-
             // Gamma (specific heat ratio), output for verification/testing
             volScalarField gammaThermo_;
+            // Pressure dilatation term
+            volScalarField piC2_;
+
             // Private Member Functions
 
             //- No copy construct
@@ -179,7 +180,9 @@ namespace Foam
             //- Solve the turbulence equations and correct the turbulence viscosity
             virtual void correct();
             // Update turbulent Mach No.
-            virtual void correctMachTurb();
+            virtual void calcMachTurb();
+            // Define pressure dilatation term
+            virtual void funcPressureDilat();
         };
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

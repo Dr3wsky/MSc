@@ -93,6 +93,15 @@ namespace Foam
                       IOobject::NO_READ,
                       IOobject::AUTO_WRITE),
                   this->mesh(),
+                  dimensionedScalar(dimless, Zero)),
+              piC2_(
+                  IOobject(
+                      "piC2",
+                      this->mesh().time().timeName(),
+                      this->mesh(),
+                      IOobject::NO_READ,
+                      IOobject::NO_WRITE),
+                  this->mesh(),
                   dimensionedScalar(dimless, Zero))
         {
             if (type == typeName)
@@ -104,11 +113,27 @@ namespace Foam
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
         // Used to update turbulent Mach number
         template <class BasicTurbulenceModel>
-        void kOmegaSSTpd<BasicTurbulenceModel>::correctMachTurb()
+        void kOmegaSSTpd<BasicTurbulenceModel>::calcMachTurb()
         {
             const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
             gammaThermo_ = thermo.gamma();
             MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);
+        }
+
+        //Used to define pressure dilatation coeffeicient
+        template <class BasicTurbulenceModel>
+        void kOmegaSSTpd<BasicTurbulenceModel>::funcPressureDilat()
+        {
+            tmp<volTensorField> tgradU = fvc::grad(this->U_);
+            volScalarField S2(2 * magSqr(symm(tgradU())));
+            volScalarField::Internal GbyNu0(
+                this->type() + ":GbyNu",
+                (tgradU() && dev(twoSymm(tgradU()))));
+            volScalarField::Internal G(this->GName(), this->nut_ * GbyNu0);
+
+            const alphaField &alpha = this->alpha_;
+            const rhoField &rho = this->rho_;
+            piC2_ = (-0.4 * this->Pk(G) + 0.2 * this->alpha_ * this->rho_ * this->omega_ * this->k_) * pow(MachTurb_, 2); 
         }
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -133,9 +158,6 @@ namespace Foam
             volScalarField &nut = this->nut_;
             fv::options &fvOptions(fv::options::New(this->mesh_));
 
-            // Calculate turbulennt Mach number
-            correctMachTurb();
-
             BasicTurbulenceModel::correct();
 
             volScalarField::Internal divU(fvc::div(fvc::absolute(this->phi(), U)));
@@ -146,6 +168,11 @@ namespace Foam
                 this->type() + ":GbyNu",
                 (tgradU() && dev(twoSymm(tgradU()))));
             volScalarField::Internal G(this->GName(), nut * GbyNu0);
+
+            // Calculate turbulent Mach number
+            calcMachTurb();
+            // Make pressure dilatation relationship
+            funcPressureDilat();
 
             // Update omega and G at the wall
             this->omega_.boundaryFieldRef().updateCoeffs();
@@ -178,7 +205,7 @@ namespace Foam
             // Turbulent kinetic energy equation
             tmp<fvScalarMatrix> kEqn(
                 fvm::ddt(alpha, rho, this->k_) + fvm::div(alphaRhoPhi, this->k_) - fvm::laplacian(alpha * rho * this->DkEff(F1), this->k_) ==
-                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * (scalar(1) + pow(MachTurb_(), 2)) * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + fvOptions(alpha, rho, this->k_));
+                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * (scalar(1) + pow(MachTurb_(), 2)) * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + piC2_() + fvOptions(alpha, rho, this->k_) );
 
             tgradU.clear();
 
