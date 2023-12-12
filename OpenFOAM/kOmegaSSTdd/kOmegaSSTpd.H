@@ -136,8 +136,6 @@ namespace Foam
             volScalarField MachTurb_;
             // Gamma (specific heat ratio), output for verification/testing
             volScalarField gammaThermo_;
-            // Pressure dilatation term
-            volScalarField piC2_;
 
             // Private Member Functions
 
@@ -181,8 +179,6 @@ namespace Foam
             virtual void correct();
             // Update turbulent Mach No.
             virtual void calcMachTurb();
-            // Define pressure dilatation term
-            virtual void funcPressureDilat();
         };
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

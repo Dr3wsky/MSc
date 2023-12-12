@@ -93,15 +93,6 @@ namespace Foam
                       IOobject::NO_READ,
                       IOobject::AUTO_WRITE),
                   this->mesh(),
-                  dimensionedScalar(dimless, Zero)),
-              piC2_(
-                  IOobject(
-                      "piC2",
-                      this->mesh().time().timeName(),
-                      this->mesh(),
-                      IOobject::NO_READ,
-                      IOobject::NO_WRITE),
-                  this->mesh(),
                   dimensionedScalar(dimless, Zero))
         {
             if (type == typeName)
@@ -118,22 +109,6 @@ namespace Foam
             const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
             gammaThermo_ = thermo.gamma();
             MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);
-        }
-
-        //Used to define pressure dilatation coeffeicient
-        template <class BasicTurbulenceModel>
-        void kOmegaSSTpd<BasicTurbulenceModel>::funcPressureDilat()
-        {
-            tmp<volTensorField> tgradU = fvc::grad(this->U_);
-            volScalarField S2(2 * magSqr(symm(tgradU())));
-            volScalarField::Internal GbyNu0(
-                this->type() + ":GbyNu",
-                (tgradU() && dev(twoSymm(tgradU()))));
-            volScalarField::Internal G(this->GName(), this->nut_ * GbyNu0);
-
-            const alphaField &alpha = this->alpha_;
-            const rhoField &rho = this->rho_;
-            piC2_ = (-0.4 * this->Pk(G) + 0.2 * this->alpha_ * this->rho_ * this->omega_ * this->k_) * pow(MachTurb_, 2); 
         }
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -171,8 +146,6 @@ namespace Foam
 
             // Calculate turbulent Mach number
             calcMachTurb();
-            // Make pressure dilatation relationship
-            funcPressureDilat();
 
             // Update omega and G at the wall
             this->omega_.boundaryFieldRef().updateCoeffs();
@@ -192,7 +165,14 @@ namespace Foam
                 // Turbulent frequency equation
                 tmp<fvScalarMatrix> omegaEqn(
                     fvm::ddt(alpha, rho, this->omega_) + fvm::div(alphaRhoPhi, this->omega_) - fvm::laplacian(alpha * rho * this->DomegaEff(F1), this->omega_) ==
-                    alpha() * rho() * gamma * GbyNu0 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * gamma * divU, this->omega_) - fvm::Sp(alpha() * rho() * beta * this->omega_(), this->omega_) - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / this->omega_(), this->omega_) + alpha() * rho() * beta * sqr(this->omegaInf_) + this->Qsas(S2(), gamma, beta) + this->omegaSource() + fvOptions(alpha, rho, this->omega_));
+                    alpha() * rho() * gamma * GbyNu0 
+                    - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * gamma * divU, this->omega_) 
+                    - fvm::Sp(alpha() * rho() * beta * this->omega_(), this->omega_) 
+                    - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / this->omega_(), this->omega_) 
+                    + alpha() * rho() * beta * sqr(this->omegaInf_) 
+                    + this->Qsas(S2(), gamma, beta) 
+                    + this->omegaSource() 
+                    + fvOptions(alpha, rho, this->omega_));
 
                 omegaEqn.ref().relax();
                 fvOptions.constrain(omegaEqn.ref());
@@ -205,7 +185,16 @@ namespace Foam
             // Turbulent kinetic energy equation
             tmp<fvScalarMatrix> kEqn(
                 fvm::ddt(alpha, rho, this->k_) + fvm::div(alphaRhoPhi, this->k_) - fvm::laplacian(alpha * rho * this->DkEff(F1), this->k_) ==
-                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * (scalar(1) + pow(MachTurb_(), 2)) * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + piC2_() + fvOptions(alpha, rho, this->k_) );
+                alpha() * rho() * this->Pk(G) 
+                - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) 
+                - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), this->k_) 
+                // Extra term added for pressur dilatation
+                + fvm::Sp(0.2 * alpha() * rho() * pow(MachTurb_(), 2) * this->epsilonByk(F1, tgradU()), this->k_) 
+                - 0.4 * this->Pk(G) * pow(MachTurb_(), 2)
+                // Terms for decay control. Not included in my sims, so Inf_ terms are zero
+                + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ 
+                + this->kSource() 
+                + fvOptions(alpha, rho, this->k_));
 
             tgradU.clear();
 
