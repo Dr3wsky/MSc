@@ -134,9 +134,12 @@ namespace Foam
         {
             // Turbulent Mach No, used for turbulence model modification
             volScalarField MachTurb_;
-
             // Gamma (specific heat ratio), output for verification/testing
             volScalarField gammaThermo_;
+            // turbulent Mach Number relationship done outside of source equations
+            volScalarField relMachT_;
+
+
             // Private Member Functions
 
             //- No copy construct
@@ -178,7 +181,9 @@ namespace Foam
             //- Solve the turbulence equations and correct the turbulence viscosity
             virtual void correct();
             // Update turbulent Mach No.
-            virtual void correctMachTurb();
+            virtual void calcMachTurb();
+            // Define F_MachTurb
+            virtual void funcMachTurb();
         };
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

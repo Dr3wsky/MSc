@@ -94,6 +94,15 @@ namespace Foam
                       IOobject::NO_READ,
                       IOobject::AUTO_WRITE),
                   this->mesh(),
+                  dimensionedScalar(dimless, Zero)),
+              relMachT_(
+                  IOobject(
+                      "relMachT",
+                      this->mesh().time().timeName(),
+                      this->mesh(),
+                      IOobject::NO_READ,
+                      IOobject::NO_WRITE),
+                  this->mesh(),
                   dimensionedScalar(dimless, Zero))
         {
             if (type == typeName)
@@ -105,11 +114,18 @@ namespace Foam
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
         // Used to update turbulent Mach number
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdd<BasicTurbulenceModel>::correctMachTurb()
+        void kOmegaSSTdd<BasicTurbulenceModel>::calcMachTurb()
         {
             const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
             gammaThermo_ = thermo.gamma();
-            MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);        }
+            MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);        
+        }
+
+        template <class BasicTurbulenceModel>
+        void kOmegaSSTdd<BasicTurbulenceModel>::funcMachTurb()
+        {
+            relMachT_ = pow(MachTurb_, 2);
+        }
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
         template <class BasicTurbulenceModel>
@@ -134,7 +150,10 @@ namespace Foam
             fv::options &fvOptions(fv::options::New(this->mesh_));
 
             // Calculate turbulennt Mach number
-            correctMachTurb();
+            calcMachTurb();
+
+            // Calculate the turbulent Mach No function
+            funcMachTurb();
 
             BasicTurbulenceModel::correct();
 
@@ -178,7 +197,7 @@ namespace Foam
             // Turbulent kinetic energy equation
             tmp<fvScalarMatrix> kEqn(
                 fvm::ddt(alpha, rho, this->k_) + fvm::div(alphaRhoPhi, this->k_) - fvm::laplacian(alpha * rho * this->DkEff(F1), this->k_) ==
-                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * (scalar(1) + pow(MachTurb_(), 2)) * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + fvOptions(alpha, rho, this->k_));
+                alpha() * rho() * this->Pk(G) - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) - fvm::Sp(alpha() * rho() * (scalar(1) + relMachT_()) * this->epsilonByk(F1, tgradU()), this->k_) + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ + this->kSource() + fvOptions(alpha, rho, this->k_));
 
             tgradU.clear();
 
