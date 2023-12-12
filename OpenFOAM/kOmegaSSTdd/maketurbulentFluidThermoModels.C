@@ -36,4 +36,7 @@ License
 #include "kOmegaSSTdd.H"
 makeRASModel(kOmegaSSTdd);
 
+#include "kOmegaSSTpd.H"
+makeRASModel(kOmegaSSTpd);
+
 // ************************************************************************* //
