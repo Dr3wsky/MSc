@@ -121,7 +121,7 @@ namespace Foam
         }
 
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdd<BasicTurbulenceModel>::funcMachTurb()
+        void kOmegaSSTpd<BasicTurbulenceModel>::funcMachTurb()
         {
             // Define turbulent Mach number relation based on Sarkar flormulation from literature
             relMachT_ = pow(MachTurb_, 2);
