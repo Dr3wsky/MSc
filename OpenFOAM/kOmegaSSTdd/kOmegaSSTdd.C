@@ -184,8 +184,16 @@ namespace Foam
 
                 // Turbulent frequency equation
                 tmp<fvScalarMatrix> omegaEqn(
-                    fvm::ddt(alpha, rho, this->omega_) + fvm::div(alphaRhoPhi, this->omega_) - fvm::laplacian(alpha * rho * this->DomegaEff(F1), this->omega_) ==
-                    alpha() * rho() * gamma * GbyNu0 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * gamma * divU, this->omega_) - fvm::Sp(alpha() * rho() * beta * this->omega_(), this->omega_) - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / this->omega_(), this->omega_) + alpha() * rho() * beta * sqr(this->omegaInf_) + this->Qsas(S2(), gamma, beta) + this->omegaSource() + fvOptions(alpha, rho, this->omega_));
+                    fvm::ddt(alpha, rho, this->omega_) + fvm::div(alphaRhoPhi, this->omega_) - fvm::laplacian(alpha * rho * this->DomegaEff(F1), this->omega_) 
+                    ==
+                    alpha() * rho() * gamma * GbyNu0 
+                    - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * gamma * divU, this->omega_) 
+                    - fvm::Sp(alpha() * rho() * beta * this->omega_(), this->omega_) 
+                    - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / this->omega_(), this->omega_) 
+                    + alpha() * rho() * beta * sqr(this->omegaInf_) 
+                    + this->Qsas(S2(), gamma, beta) 
+                    + this->omegaSource() 
+                    + fvOptions(alpha, rho, this->omega_));
 
                 omegaEqn.ref().relax();
                 fvOptions.constrain(omegaEqn.ref());
@@ -197,11 +205,12 @@ namespace Foam
 
             // Turbulent kinetic energy equation
             tmp<fvScalarMatrix> kEqn(
-                fvm::ddt(alpha, rho, this->k_) + fvm::div(alphaRhoPhi, this->k_) - fvm::laplacian(alpha * rho * this->DkEff(F1), this->k_) ==
+                fvm::ddt(alpha, rho, this->k_) + fvm::div(alphaRhoPhi, this->k_) - fvm::laplacian(alpha * rho * this->DkEff(F1), this->k_) 
+                ==
                 alpha() * rho() * this->Pk(G) 
                 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) 
                 // Modified epsilon term to account for compressible dissipation (dilatation dissipation from turbulent Mach Number relationship)
-                - fvm::Sp(alpha() * rho() * this->betaStar_ * (scalar(1) + relMachT_()) * this->epsilonByk(F1, tgradU()), this->k_) 
+                - fvm::Sp(alpha() * rho() * (scalar(1) + relMachT_()) * this->epsilonByk(F1, tgradU()), this->k_) 
                 // Terms for decay control. Not included in my sims, so Inf_ terms are zero
                 + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ 
                 + this->kSource() 

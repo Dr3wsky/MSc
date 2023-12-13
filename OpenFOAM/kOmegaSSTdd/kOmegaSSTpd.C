@@ -102,6 +102,15 @@ namespace Foam
                       IOobject::NO_READ,
                       IOobject::NO_WRITE),
                   this->mesh(),
+                  dimensionedScalar(dimless, Zero)), 
+            pdCC_(
+                  IOobject(
+                      "pdCC",
+                      this->mesh().time().timeName(),
+                      this->mesh(),
+                      IOobject::NO_READ,
+                      IOobject::NO_WRITE),
+                  this->mesh(),
                   dimensionedScalar(dimless, Zero))
         {
             if (type == typeName)
@@ -126,6 +135,15 @@ namespace Foam
             // Define turbulent Mach number relation based on Sarkar flormulation from literature
             relMachT_ = pow(MachTurb_, 2);
         }
+
+        template <class BasicTurbulenceModel>
+        void kOmegaSSTpd<BasicTurbulenceModel>::pressureDilatCoeff()
+        {
+            // Define turbulent Mach number relation based on Sarkar flormulation from literature
+            pdCC_ = 
+        }
+
+
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
         template <class BasicTurbulenceModel>
@@ -208,7 +226,7 @@ namespace Foam
                 - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), this->k_) 
                 // Extra term added for pressur dilatation
                 + fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->epsilonByk(F1, tgradU()), this->k_) 
-                // - 0.4 * this->Pk(G) * pow(MachTurb_(), 2)
+                - 0.4 * alpha() * rho() * this->Pk(G)
                 // Terms for decay control. Not included in my sims, so Inf_ terms are zero
                 + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ 
                 + this->kSource() 
