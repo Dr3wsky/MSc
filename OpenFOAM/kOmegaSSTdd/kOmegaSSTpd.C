@@ -93,6 +93,15 @@ namespace Foam
                       IOobject::NO_READ,
                       IOobject::AUTO_WRITE),
                   this->mesh(),
+                  dimensionedScalar(dimless, Zero)), 
+            relMachT_(
+                  IOobject(
+                      "relMachT",
+                      this->mesh().time().timeName(),
+                      this->mesh(),
+                      IOobject::NO_READ,
+                      IOobject::NO_WRITE),
+                  this->mesh(),
                   dimensionedScalar(dimless, Zero))
         {
             if (type == typeName)
@@ -109,6 +118,13 @@ namespace Foam
             const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
             gammaThermo_ = thermo.gamma();
             MachTurb_ = sqrt(2 * this->k_) / sqrt(gammaThermo_ * thermo.p() / this->rho_);
+        }
+
+        template <class BasicTurbulenceModel>
+        void kOmegaSSTdd<BasicTurbulenceModel>::funcMachTurb()
+        {
+            // Define turbulent Mach number relation based on Sarkar flormulation from literature
+            relMachT_ = pow(MachTurb_, 2);
         }
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -146,6 +162,8 @@ namespace Foam
 
             // Calculate turbulent Mach number
             calcMachTurb();
+            // define turbulent Mach Number relationship
+            funcMachTurb();
 
             // Update omega and G at the wall
             this->omega_.boundaryFieldRef().updateCoeffs();
@@ -189,8 +207,8 @@ namespace Foam
                 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) 
                 - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), this->k_) 
                 // Extra term added for pressur dilatation
-                + fvm::Sp(0.2 * alpha() * rho() * pow(MachTurb_(), 2) * this->epsilonByk(F1, tgradU()), this->k_) 
-                - 0.4 * this->Pk(G) * pow(MachTurb_(), 2)
+                + fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->epsilonByk(F1, tgradU()), this->k_) 
+                // - 0.4 * this->Pk(G) * pow(MachTurb_(), 2)
                 // Terms for decay control. Not included in my sims, so Inf_ terms are zero
                 + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ 
                 + this->kSource() 
