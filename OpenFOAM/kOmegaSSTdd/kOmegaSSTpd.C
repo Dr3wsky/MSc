@@ -137,10 +137,10 @@ namespace Foam
         }
 
         template <class BasicTurbulenceModel>
-        void kOmegaSSTpd<BasicTurbulenceModel>::pressureDilatCoeff()
+        void kOmegaSSTpd<BasicTurbulenceModel>::calcPressureDilat()
         {
-            // Define turbulent Mach number relation based on Sarkar flormulation from literature
-            pdCC_ = 
+            // volScalarField &pdCC = this->pdCC_;
+            // pdCC_ = relMachT_() * (- 0.4 * this->alpha_ * this->rho_);
         }
 
 
@@ -225,8 +225,8 @@ namespace Foam
                 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) 
                 - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), this->k_) 
                 // Extra term added for pressur dilatation
+                - 0.4 * alpha() * rho() * this->Pk(G) * relMachT_()
                 + fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->epsilonByk(F1, tgradU()), this->k_) 
-                - 0.4 * alpha() * rho() * this->Pk(G)
                 // Terms for decay control. Not included in my sims, so Inf_ terms are zero
                 + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ 
                 + this->kSource() 

@@ -138,6 +138,8 @@ namespace Foam
             volScalarField gammaThermo_;
             // turbulent Mach Number relationship done outside of source equations
             volScalarField relMachT_;
+            // pressure dilatation correction term
+            volScalarField pdCC_;
 
             // Private Member Functions
 
@@ -183,6 +185,8 @@ namespace Foam
             virtual void calcMachTurb();
             // Define Turbulent Mach number relathionship for diff formulations
             virtual void funcMachTurb();
+            // Calculate the pressure dilatationterm
+            virtual void calcPressureDilat();
         };
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
