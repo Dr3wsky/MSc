@@ -224,8 +224,8 @@ namespace Foam
                 alpha() * rho() * this->Pk(G) 
                 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) 
                 - fvm::Sp(alpha() * rho() * this->epsilonByk(F1, tgradU()), this->k_) 
-                // Extra term added for pressur dilatation
-                - 0.4 * alpha() * rho() * this->Pk(G) * relMachT_()
+                // Extra terms added for pressure dilatation, expanded out
+                - 0.4 * alpha() * rho() * this->Pk(G) * relMachT_() 
                 + fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->epsilonByk(F1, tgradU()), this->k_) 
                 // Terms for decay control. Not included in my sims, so Inf_ terms are zero
                 + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ 
