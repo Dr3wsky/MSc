@@ -206,8 +206,8 @@ namespace Foam
                     - fvm::Sp(alpha() * rho() * beta * this->omega_(), this->omega_) 
                     - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / this->omega_(), this->omega_) 
                     // Extra terms for pressure dilatation, expanded out
-                    - 0.4 * alpha() * rho() * this->Pk(G) * relMachT_() / nut
-                    + fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->epsilonByk(F1, tgradU()) / nut, this->k_) 
+                    + 0.4 * alpha() * rho() * this->Pk(G) * relMachT_() / nut
+                    - fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->betaStar_ * this->k_ / nut, this->omega_)
                     + alpha() * rho() * beta * sqr(this->omegaInf_) 
                     + this->Qsas(S2(), gamma, beta) 
                     + this->omegaSource() 
