@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "kOmegaSSTdd.H"
+#include "kOmegaSSTcd.H"
 #include "MachNo.H" //
 #include "fluidThermo.H"
 #include "addToRunTimeSelectionTable.H" //
@@ -40,7 +40,7 @@ namespace Foam
         // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdd<BasicTurbulenceModel>::correctNut(const volScalarField &S2)
+        void kOmegaSSTcd<BasicTurbulenceModel>::correctNut(const volScalarField &S2)
         {
             // Correct the turbulence viscosity
             kOmegaSSTBase<eddyViscosity<RASModel<BasicTurbulenceModel>>>::correctNut(
@@ -51,7 +51,7 @@ namespace Foam
         }
 
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdd<BasicTurbulenceModel>::correctNut()
+        void kOmegaSSTcd<BasicTurbulenceModel>::correctNut()
         {
             correctNut(2 * magSqr(symm(fvc::grad(this->U_))));
         }
@@ -59,7 +59,7 @@ namespace Foam
         // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
         template <class BasicTurbulenceModel>
-        kOmegaSSTdd<BasicTurbulenceModel>::kOmegaSSTdd(
+        kOmegaSSTcd<BasicTurbulenceModel>::kOmegaSSTcd(
             const alphaField &alpha,
             const rhoField &rho,
             const volVectorField &U,
@@ -114,7 +114,7 @@ namespace Foam
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
         // Used to update turbulent Mach number
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdd<BasicTurbulenceModel>::calcMachTurb()
+        void kOmegaSSTcd<BasicTurbulenceModel>::calcMachTurb()
         {
             const fluidThermo &thermo = this->mesh().objectRegistry::lookupObject<fluidThermo>(fluidThermo::dictName);
             gammaThermo_ = thermo.gamma();
@@ -122,7 +122,7 @@ namespace Foam
         }
 
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdd<BasicTurbulenceModel>::funcMachTurb()
+        void kOmegaSSTcd<BasicTurbulenceModel>::funcMachTurb()
         {
             // Define turbulent Mach number relation based on Sarkar flormulation from literature
             relMachT_ = pow(MachTurb_, 2);
@@ -130,7 +130,7 @@ namespace Foam
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
         template <class BasicTurbulenceModel>
-        void kOmegaSSTdd<BasicTurbulenceModel>::correct()
+        void kOmegaSSTcd<BasicTurbulenceModel>::correct()
         {
             if (!this->turbulence_)
             {
@@ -138,9 +138,9 @@ namespace Foam
             }
 
             // Output statement to show turbulence model being used
-            Info << "-----------------------------------------------------------------------------" << endl;
-            Info << "This is a modified version of kOmegaSST to account for dilatation dissipation" << endl;
-            Info << "-----------------------------------------------------------------------------" << endl;
+            Info << "-------------------------------------------------------------------------------" << endl;
+            Info << "This is a modified version of kOmegaSST to account for compressible dissipation" << endl;
+            Info << "-------------------------------------------------------------------------------" << endl;
 
             // Local references
             const alphaField &alpha = this->alpha_;
@@ -190,6 +190,9 @@ namespace Foam
                     - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * gamma * divU, this->omega_) 
                     - fvm::Sp(alpha() * rho() * beta * this->omega_(), this->omega_) 
                     - fvm::SuSp(alpha() * rho() * (F1() - scalar(1)) * CDkOmega() / this->omega_(), this->omega_) 
+                    // Additional terms to account for pressure dissipation, expanded out
+                    + 0.4 * alpha() * rho() * this->Pk(G) * relMachT_() / nut
+                    - fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->betaStar_ * this->k_ / nut, this->omega_)
                     + alpha() * rho() * beta * sqr(this->omegaInf_) 
                     + this->Qsas(S2(), gamma, beta) 
                     + this->omegaSource() 
@@ -211,6 +214,9 @@ namespace Foam
                 - fvm::SuSp((2.0 / 3.0) * alpha() * rho() * divU, this->k_) 
                 // Modified epsilon term to account for compressible dissipation (dilatation dissipation from turbulent Mach Number relationship)
                 - fvm::Sp(alpha() * rho() * (scalar(1) + relMachT_()) * this->epsilonByk(F1, tgradU()), this->k_) 
+                // Additional terms to account for pressure dilatation, expanded out
+                - 0.4 * alpha() * rho() * this->Pk(G) * relMachT_()
+                + fvm::Sp(0.2 * alpha() * rho() * relMachT_() * this->epsilonByk(F1, tgradU()), this->k_) 
                 // Terms for decay control. Not included in my sims, so Inf_ terms are zero
                 + alpha() * rho() * this->betaStar_ * this->omegaInf_ * this->kInf_ 
                 + this->kSource() 

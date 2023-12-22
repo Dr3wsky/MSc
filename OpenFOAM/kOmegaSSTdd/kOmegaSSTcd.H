@@ -101,15 +101,15 @@ Description
     \endverbatim
 
 SourceFiles
-    kOmegaSST.C
+    kOmegaSSTcd.C
 
 SeeAlso
     kOmegaSSTBase.H
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kOmegaSSTdd_H
-#define kOmegaSSTdd_H
+#ifndef kOmegaSSTcd_H
+#define kOmegaSSTcd_H
 
 #include "kOmegaSSTBase.H"
 #include "RASModel.H"
@@ -129,7 +129,7 @@ namespace Foam
         \*---------------------------------------------------------------------------*/
 
         template <class BasicTurbulenceModel>
-        class kOmegaSSTdd
+        class kOmegaSSTcd
             : public kOmegaSSTBase<eddyViscosity<RASModel<BasicTurbulenceModel>>>
         {
             // Turbulent Mach No, used for turbulence model modification
@@ -143,10 +143,10 @@ namespace Foam
             // Private Member Functions
 
             //- No copy construct
-            kOmegaSSTdd(const kOmegaSSTdd &) = delete;
+            kOmegaSSTcd(const kOmegaSSTcd &) = delete;
 
             //- No copy assignment
-            void operator=(const kOmegaSSTdd &) = delete;
+            void operator=(const kOmegaSSTcd &) = delete;
 
         protected:
             // Protected Member Functions
@@ -160,12 +160,12 @@ namespace Foam
             typedef typename BasicTurbulenceModel::transportModel transportModel;
 
             //- Runtime type information
-            TypeName("kOmegaSSTdd");
+            TypeName("kOmegaSSTcd");
 
             // Constructors
 
             //- Construct from components
-            kOmegaSSTdd(
+            kOmegaSSTcd(
                 const alphaField &alpha,
                 const rhoField &rho,
                 const volVectorField &U,
@@ -176,7 +176,7 @@ namespace Foam
                 const word &type = typeName);
 
             //- Destructor
-            virtual ~kOmegaSSTdd() = default;
+            virtual ~kOmegaSSTcd() = default;
 
             //- Solve the turbulence equations and correct the turbulence viscosity
             virtual void correct();
@@ -193,7 +193,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 #ifdef NoRepository
-#include "kOmegaSSTdd.C"
+#include "kOmegaSSTcd.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
