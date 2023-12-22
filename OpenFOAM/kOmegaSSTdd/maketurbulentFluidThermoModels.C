@@ -33,10 +33,16 @@ License
 // Compressibility Correction  models
 // -------------------------------------------------------------------------- //
 
+// Dilatation Dissipation - modified dissipation term with MachT func, Sarkar
 #include "kOmegaSSTdd.H"
 makeRASModel(kOmegaSSTdd);
 
+// Pressur Dissipation - additional term in both k and omega
 #include "kOmegaSSTpd.H"
 makeRASModel(kOmegaSSTpd);
+
+// Compressible Dissipation - combination of both DD and PD
+#include "kOmegaSSTcd.H"
+makeRASModel(kOmegaSSTcd);
 
 // ************************************************************************* //
